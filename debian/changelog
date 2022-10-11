@@ -1,3 +1,9 @@
+kiauto (2.0.6-1) stable; urgency=medium
+
+  * Fixed ERC exclusions
+
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Tue, 11 Oct 2022 09:23:32 -0300
+
 kiauto (2.0.5-1) stable; urgency=medium
 
   * Added support for KiCad 5 "could not find valid layer for pad" warning
