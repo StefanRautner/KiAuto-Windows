@@ -1220,6 +1220,14 @@ def create_pcbnew_config(cfg):
             write_color(text_file, 'Silk', cfg.silk_color)
             write_color(text_file, 'Copper', cfg.copper_color)
             write_color(text_file, 'BoardBody', cfg.board_color)
+            # VRML options
+            text_file.write('VrmlExportUnit=%d\n' % (cfg.units))
+            text_file.write('VrmlExportCopyFiles=%d\n' % (cfg.copy_3d_models))
+            text_file.write('VrmlUseRelativePaths=%d\n' % (cfg.use_relative_paths))
+            text_file.write('VrmlRefUnits=%d\n' % (cfg.ref_units))
+            text_file.write('VrmlRefX=%f\n' % (cfg.ref_x))
+            text_file.write('VrmlRefY=%f\n' % (cfg.ref_y))
+            text_file.write('VrmlUsePlainPCB=0\n')
     # shutil.copy2(cfg.conf_pcbnew, '/tmp/generated')
 
 
@@ -1411,8 +1419,8 @@ if __name__ == '__main__':
     export_vrml_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file', default=['pcb.wrl'])
     export_vrml_parser.add_argument('--dir_models', '-d', help='Name of dir to store the footprint models.'
                                     ' Models will be embedded if not specified.', type=str)
-    export_vrml_parser.add_argument('--ref_x', '-x', help='X origin, for user defined. Use center otherwise.', type=float)
-    export_vrml_parser.add_argument('--ref_y', '-y', help='Y origin, for user defined. Use center otherwise.', type=float)
+    export_vrml_parser.add_argument('--ref_x', '-x', help='X origin, for user defined. KiCad6: Use center otherwise.', type=float)
+    export_vrml_parser.add_argument('--ref_y', '-y', help='Y origin, for user defined. KiCad6: Use center otherwise.', type=float)
     export_vrml_parser.add_argument('--ref_units', '-u', help='Origin units', default='millimeters', const='millimeters',
                                     nargs='?', choices=['millimeters', 'inches'])
     export_vrml_parser.add_argument('--units', '-U', help='VRML units', default='millimeters', const='millimeters',
