@@ -292,11 +292,17 @@ void gtk_label_set_text_with_mnemonic(GtkLabel *label, const gchar *str)
     str="_Use drill/place file origin as origin";
  else if (g_strcmp0(str, "Save the origin coordinates in the file")==0)
     str="_Save the origin coordinates in the file";
+  /* VRML export dialog */
+ /* Doesn't work ... all is broken ...
+ else if (g_strcmp0(str, "Footprint 3D model path:")==0)
+    str="_Footprint 3D model path:";*/
   /* File menu */
  else if (g_strcmp0(str, "Export")==0)
     str="E_xport";
  else if (g_strcmp0(str, "GenCAD...")==0)
     str="_GenCAD...";
+ else if (g_strcmp0(str, "VRML...")==0)
+    str="_VRML...";
  else if (g_strcmp0(str, "IPC-D-356 Netlist File...")==0)
     str="_IPC-D-356 Netlist File...";
   /* EEschema Plot Schematic Options */

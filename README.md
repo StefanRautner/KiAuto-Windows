@@ -48,6 +48,7 @@ Currently tested and working:
 - Basic BoM generation (mainly the XML needed for [KiBoM](https://github.com/SchrodingersGat/KiBoM))
 - PCB 3D render
 - Export PCB in Gencad format
+- Export PCB in VRML format (WIP)
 
 If you are looking for Gerbers, Drill, Position, STEP and more take a look at [KiBot](https://github.com/INTI-CMNB/KiBot).
 
