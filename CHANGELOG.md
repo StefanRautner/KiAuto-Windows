@@ -5,16 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- VRML Export (INTI-CMNB/KiBot#349)
+
 
 ## [2.0.6] - 2022-10-11
 ### Fixed
 - Problems with GTK 3.24.34 and recycled DRC dialog
 - ERC exclusions not detected (#31)
 
+
 ## [2.0.5] - 2022-09-22
 ### Added
 - Support for KiCad 5 "could not find valid layer for pad" warning
   (See INTI-CMNB/KiBot#299)
+
 
 ## [2.0.4] - 2022-09-12
 ### Added
