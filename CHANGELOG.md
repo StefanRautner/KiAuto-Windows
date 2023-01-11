@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Nothing
+
+## [2.1.1] - 2023-01-11
+### Added
+- Eeschema Export:
+  - Color theme
+  - Enable background color (INTI-CMNB/KiBot#362)
+  - HPGL origin
+  - HPGL pen size
+
+
+## [2.1.0] - 2022-12-17
 ### Added
 - VRML Export (INTI-CMNB/KiBot#349)
 

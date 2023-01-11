@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2022 Salvador E. Tropea
-# Copyright (c) 2020-2022 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2020-2023 Salvador E. Tropea
+# Copyright (c) 2020-2023 Instituto Nacional de Tecnologïa Industrial
 # Copyright (c) 2019 Jesse Vincent (@obra)
 # Copyright (c) 2018-2019 Seppe Stas (@seppestas) (Productize SPRL)
 # Based on ideas by: Scott Bezek (@scottbez1)
@@ -561,14 +561,18 @@ def create_eeschema_config(cfg):
             plot_ops['format'] = index
             plot_ops['color'] = not cfg.monochrome
             plot_ops['frame_reference'] = not cfg.no_frame
-            # TODO: allow user configuration
-            plot_ops['color_theme'] = '_builtin_default'
+            plot_ops['color_theme'] = cfg.color_theme.lower()
+            plot_ops['background_color'] = cfg.background_color
+            plot_ops['hpgl_origin'] = cfg.hpgl_origin
+            # plot_ops['hpgl_paper_size'] = ??
+            plot_ops['hpgl_pen_size'] = cfg.hpgl_pen_size
             eeconf = {'plot': plot_ops}
             eeconf['system'] = {"first_run_shown": True, "never_show_rescue_dialog": True}
-            eeconf['appearance'] = {"show_sexpr_file_convert_warning": False}
+            eeconf['appearance'] = {"show_sexpr_file_convert_warning": False, "color_theme": cfg.color_theme.lower()}
             eeconf['window'] = {"size_x": cfg.rec_width, "size_y": cfg.rec_height}
-            text_file.write(json.dumps(eeconf))
-            logger.debug(json.dumps(eeconf))
+            text = json.dumps(eeconf)
+            text_file.write(text)
+            logger.debug(text)
         else:
             text_file.write('RescueNeverShow=1\n')
             text_file.write('ShowIllegalSymbolLibDialog=0\n')
@@ -664,7 +668,7 @@ if __name__ == '__main__':
     parser.add_argument('--time_out_scale', help='Timeout multiplier, affects most timeouts',
                         type=float, default=TIME_OUT_MULT)
 
-    # afFm
+    # abcfFmoOp
     export_parser = subparsers.add_parser('export', help='Export a schematic')
     export_parser.add_argument('--file_format', '-f', help='Export file format',
                                choices=['svg', 'pdf', 'ps', 'dxf', 'hpgl'], default='pdf')
@@ -672,6 +676,13 @@ if __name__ == '__main__':
     export_parser.add_argument('--monochrome', '-m', help='Black and white output', action='store_true')
     export_parser.add_argument('--no_frame', '-F', help='No frame and title block', action='store_true')
     export_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file')
+    export_parser.add_argument('--color_theme', '-c', type=str, help='Name of the color theme [_builtin_default] (KiCad 6)',
+                               default='_builtin_default')
+    export_parser.add_argument('--background_color', '-b', action='store_true', help='Use the background color (KiCad 6)')
+    export_parser.add_argument('--hpgl_origin', '-O', type=int, choices=range(4), default=0,
+                               help='HPGL origin: 0 bottom left, 1 centered, 2 page fit, 3 content fit (KiCad 6)')
+    export_parser.add_argument('--hpgl_pen_size', '-p', type=float, help='HPGL pen size in mm [0.4826] (KiCad 6)',
+                               default=0.4826)
 
     erc_parser = subparsers.add_parser('run_erc', help='Run Electrical Rules Checker on a schematic')
     erc_parser.add_argument('--errors_filter', '-f', nargs=1, help='File with filters to exclude errors')
@@ -700,6 +711,10 @@ if __name__ == '__main__':
     cfg.no_frame = getattr(args, 'no_frame', False)
     cfg.warnings_as_errors = getattr(args, 'warnings_as_errors', False)
     cfg.wait_start = args.wait_start
+    cfg.color_theme = getattr(args, 'color_theme', '_builtin_default')
+    cfg.background_color = getattr(args, 'background_color', False)
+    cfg.hpgl_origin = getattr(args, 'hpgl_origin', 0)
+    cfg.hpgl_pen_size = getattr(args, 'hpgl_pen_size', 0.19)
     # Make sure the input file exists and has an extension
     check_input_file(cfg, NO_SCHEMATIC, WRONG_SCH_NAME)
     # Load filters

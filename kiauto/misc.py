@@ -292,10 +292,10 @@ def get_en_locale(logger):
 
 
 __author__ = 'Salvador E. Tropea'
-__copyright__ = 'Copyright 2018-2022, INTI/Productize SPRL'
+__copyright__ = 'Copyright 2018-2023, INTI/Productize SPRL'
 __credits__ = ['Salvador E. Tropea', 'Seppe Stas', 'Jesse Vincent', 'Scott Bezek']
 __license__ = 'Apache 2.0'
 __email__ = 'stropea@inti.gob.ar'
 __status__ = 'stable'
 __url__ = 'https://github.com/INTI-CMNB/KiAuto/'
-__version__ = '2.1.0'
+__version__ = '2.1.1'

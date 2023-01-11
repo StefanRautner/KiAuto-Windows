@@ -1,3 +1,9 @@
+kiauto (2.1.1-1) stable; urgency=medium
+
+  * Added more eeschema export options
+
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Wed, 11 Jan 2023 19:16:13 -0300
+
 kiauto (2.1.0-1) stable; urgency=medium
 
   * Added VRML export
