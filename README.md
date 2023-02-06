@@ -174,7 +174,7 @@ Tools like [KiBoM](https://github.com/SchrodingersGat/KiBoM) can generate a nice
 ``` 
 eeschema_do bom_xml YOUR_SCHEMATIC.sch DESTINATION/
 ```
-After running it *./YOUR_SCHEMATIC.xml* will be updated. You'll also get *DESTINATION/YOUR_SCHEMATIC.csv* contain a very basic BoM generated using KiCad's *bom2grouped_csv.xsl* template.
+After running it *./YOUR_SCHEMATIC.xml* will be updated.
 
 ### Run DRC
 
