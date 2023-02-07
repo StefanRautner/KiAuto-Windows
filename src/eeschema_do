@@ -228,6 +228,19 @@ def wait_create(cfg, name):
     wait_for_file_created_by_process(cfg.eeschema_pid, cfg.output_file)
 
 
+def eeschema_plot_schematic_cli(cfg):
+    outf = cfg.output_file if cfg.export_format == 'pdf' else os.path.dirname(cfg.output_file)
+    cmd = [cfg.kicad_cli, 'sch', 'export', cfg.export_format, '-o', outf, '-t', cfg.color_theme]
+    if cfg.monochrome:
+        cmd.append('--black-and-white')
+    if cfg.no_frame:
+        cmd.append('--exclude-drawing-sheet')
+    if not cfg.background_color:
+        cmd.append('--no-background-color')
+    cmd.append(cfg.input_file)
+    run_command(cmd)
+
+
 def eeschema_plot_schematic(cfg):
     if cfg.ki5:
         open_keys = ['key', 'alt+f', 'l']
@@ -671,6 +684,15 @@ def wait_eeschema_start_by_msg(cfg):
     return False
 
 
+def can_be_done_using_cli(command, cfg):
+    if not cfg.ki7:
+        return False
+    if command in {'netlist', 'bom_xml'}:
+        return True
+    # Export can be partially done using the CLI
+    return command == 'export' and cfg.export_format in {'svg', 'pdf'} and cfg.all_pages
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='KiCad schematic automation')
     subparsers = parser.add_subparsers(help='Command:', dest='command')
@@ -811,11 +833,13 @@ if __name__ == '__main__':
     #
     # Do all the work
     #
-    if args.command in {'netlist', 'bom_xml'} and cfg.ki7:
+    if can_be_done_using_cli(args.command, cfg):
         if args.command == 'netlist':
             eeschema_netlist_commands_cli(cfg)
-        else:
+        elif args.command == 'bom_xml':
             eeschema_bom_xml_commands_cli(cfg)
+        else:  # export
+            eeschema_plot_schematic_cli(cfg)
         do_retry = False
         cfg.use_interposer = cfg.enable_interposer = False
     else:
