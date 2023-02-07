@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2022 Salvador E. Tropea
-# Copyright (c) 2020-2022 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2020-2023 Salvador E. Tropea
+# Copyright (c) 2020-2023 Instituto Nacional de Tecnologïa Industrial
 # License: Apache 2.0
 # Project: KiAuto (formerly kicad-automation-scripts)
 import configparser
@@ -44,6 +44,7 @@ NIGHTLY = 'nightly'
 TIME_OUT_MULT = 1.0
 
 KICAD_VERSION_5_99 = 5099000
+KICAD_VERSION_6_99 = 6099000
 KICAD_SHARE = '/usr/share/kicad/'
 KICAD_NIGHTLY_SHARE = '/usr/share/kicad-nightly/'
 
@@ -146,6 +147,8 @@ class Config(object):
         logger.debug('Detected KiCad v{}.{}.{} ({} {})'.format(self.kicad_version_major, self.kicad_version_minor,
                      self.kicad_version_patch, kicad_version, self.kicad_version))
         self.ki5 = self.kicad_version < KICAD_VERSION_5_99
+        self.ki6 = not self.ki5 and self.kicad_version < KICAD_VERSION_6_99
+        self.ki7 = not self.ki5 and not self.ki6
         # Config file names
         if not self.ki5:
             self.kicad_conf_path = pcbnew.GetSettingsManager().GetUserSettingsPath()
@@ -221,8 +224,11 @@ class Config(object):
         if not self.ki5:
             # KiCad 5.99.0
             # self.ee_window_title = r'\[.*\] — Eeschema$'  # "PROJECT [HIERARCHY_PATH] - Eeschema"
-            # KiCad 6.0.0 rc1
-            self.ee_window_title = r'\[.*\] — Schematic Editor$'  # "PROJECT [HIERARCHY_PATH] - Schematic Editor"
+            # KiCad 6.x
+            if self.ki6:
+                self.ee_window_title = r'\[.*\] — Schematic Editor$'  # "PROJECT [HIERARCHY_PATH] - Schematic Editor"
+            else:
+                self.ee_window_title = r'.* — Schematic Editor$'  # "SHEET [HIERARCHY_PATH]? - Schematic Editor"
             self.pn_window_title = r'.* — PCB Editor$'  # "PROJECT - PCB Editor"
             self.pn_simple_window_title = 'PCB Editor'
             kind = 'PCB' if self.is_pcbnew else 'Schematic'
@@ -298,4 +304,4 @@ __license__ = 'Apache 2.0'
 __email__ = 'stropea@inti.gob.ar'
 __status__ = 'stable'
 __url__ = 'https://github.com/INTI-CMNB/KiAuto/'
-__version__ = '2.1.1'
+__version__ = '2.2.0'
