@@ -525,6 +525,11 @@ def eeschema_netlist_commands_n(cfg, open_keys, generate_keys, dialog_name):
     wait_create(cfg, 'Netlist')
 
 
+def eeschema_bom_xml_commands_cli(cfg):
+    cmd = [cfg.kicad_cli, 'sch', 'export', 'netlist', '-o', cfg.output_file, '--format', 'kicadxml', cfg.input_file]
+    run_command(cmd)
+
+
 def eeschema_bom_xml_commands(cfg):
     # KiCad 5.1 vs 6 differences
     if cfg.ki5:
@@ -806,8 +811,11 @@ if __name__ == '__main__':
     #
     # Do all the work
     #
-    if args.command == 'netlist' and cfg.ki7:
-        eeschema_netlist_commands_cli(cfg)
+    if args.command in {'netlist', 'bom_xml'} and cfg.ki7:
+        if args.command == 'netlist':
+            eeschema_netlist_commands_cli(cfg)
+        else:
+            eeschema_bom_xml_commands_cli(cfg)
         do_retry = False
         cfg.use_interposer = cfg.enable_interposer = False
     else:
