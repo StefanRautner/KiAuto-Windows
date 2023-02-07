@@ -1662,6 +1662,9 @@ if __name__ == '__main__':
                         do_retry = True
                     else:
                         if args.command == 'export':
+                            # TODO: Implement KiCad 7 cli version.
+                            # Currently useless since PDF is always B/W and KiBot has a much faster and better print
+                            # KiCad 7 bug: https://gitlab.com/kicad/code/kicad/-/issues/13805
                             print_layers(cfg, id_pcbnew)
                         elif args.command == '3d_view':
                             capture_3d_view(cfg)
