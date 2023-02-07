@@ -152,6 +152,9 @@ class Config(object):
         self.ki5 = self.kicad_version < KICAD_VERSION_5_99
         self.ki6 = not self.ki5 and self.kicad_version < KICAD_VERSION_6_99
         self.ki7 = not self.ki5 and not self.ki6
+        if self.ki7:
+            # Now part of the kicad-cli tool
+            self.kicad2step = self.kicad_cli
         # Config file names
         if not self.ki5:
             self.kicad_conf_path = pcbnew.GetSettingsManager().GetUserSettingsPath()

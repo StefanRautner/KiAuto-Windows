@@ -6,8 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.0] - UNRELEASED
 ### Added
-- eeschema_do support for KiCad 7
-- pcbnew_do: export_gencad, ipc_netlist, export_vrml, export support for KiCad 7
+- KiCad 7 support
 
 ## [2.1.1] - 2023-01-11
 ### Added

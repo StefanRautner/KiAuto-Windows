@@ -121,6 +121,8 @@ if __name__ == '__main__':
     logger.info('KiCad to STEP wrapper')
 
     cmd = [cfg.kicad2step]
+    if cfg.ki7:
+        cmd.extend(['pcb', 'export', 'step'])
     if args.output_filename:
         fname = args.output_filename[0]
         if os.path.basename(fname) == fname:
@@ -145,7 +147,7 @@ if __name__ == '__main__':
 
     flog_out, flog_err, _ = get_log_files(output_dir, 'kicad2step')
 
-    if cfg.kicad_version_major == 5:
+    if cfg.kicad_version_major == 5 or cfg.ki7:
         res = run_cli_version(cmd, cfg)
     else:
         res = run_gui_version(cmd, cfg, flog_out, flog_err)
