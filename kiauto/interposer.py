@@ -657,6 +657,8 @@ def wait_start_by_msg(cfg):
             dismiss_error(cfg, title)
         elif title == 'File Open Error':
             dismiss_file_open_error(cfg, title)
+        elif cfg.ki7 and title == 'File Open Warning':
+            dismiss_file_open_error(cfg, title)
         elif title == 'Confirmation':
             dismiss_already_running(cfg, title)
         elif title == 'Warning':
