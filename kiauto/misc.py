@@ -36,6 +36,7 @@ MISSING_TOOL = 15
 KICAD_DIED = 16
 READ_ONLY_PROBLEM = 17
 WONT_OVERWRITE = 18
+KICAD_CLI_ERROR = 19
 # Wait 60 s to pcbnew/eeschema window to be present
 WAIT_START = 60
 # Name for testing versions
@@ -112,12 +113,14 @@ class Config(object):
         self.eeschema = 'eeschema'
         self.pcbnew = 'pcbnew'
         self.kicad2step = 'kicad2step'
+        self.kicad_cli = 'kicad-cli'
         self.kicad_conf_dir = 'kicad'
         ng_ver = os.environ.get('KIAUS_USE_NIGHTLY')
         if ng_ver:
             self.eeschema += '-'+NIGHTLY
             self.pcbnew += '-'+NIGHTLY
             self.kicad2step += '-'+NIGHTLY
+            self.kicad_cli += '-'+NIGHTLY
             self.kicad_conf_dir += os.path.join(NIGHTLY, ng_ver)
             # Path to the Python module
             path.insert(0, '/usr/lib/kicad-nightly/lib/python3/dist-packages')

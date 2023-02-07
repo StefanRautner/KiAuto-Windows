@@ -19,14 +19,15 @@ This program runs eeschema and can:
 The process is graphical and very delicated.
 """
 
-import os
-import subprocess
-import sys
-import re
 import argparse
 import atexit
 import json
+import os
+import re
+import shlex
 import shutil
+import subprocess
+import sys
 import time
 
 # Look for the 'kiauto' module from where the script is running
@@ -58,6 +59,23 @@ TITLE_REMAP_SYMBOLS = '^Remap Symbols$'
 TITLE_ERROR = '^Error$'
 TITLE_WARNING = '^Warning$'
 KI6_LOADING = r'^\[no schematic loaded\] '
+
+
+def debug_output(res):
+    if res.stdout:
+        logger.debug('- Output from command: '+res.stdout.decode())
+
+
+def run_command(command):
+    logger.debug('Executing: '+shlex.join(command))
+    try:
+        res = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        logger.error('Running {} returned {}'.format(e.cmd, e.returncode))
+        debug_output(e)
+        exit(KICAD_CLI_ERROR)
+    debug_output(res)
+    return res.stdout.decode().rstrip()
 
 
 def dismiss_library_error():
@@ -440,6 +458,11 @@ def eeschema_run_erc_schematic(cfg):
             eeschema_run_erc_schematic_6_0_n(cfg)
 
 
+def eeschema_netlist_commands_cli(cfg):
+    cmd = [cfg.kicad_cli, 'sch', 'export', 'netlist', '-o', cfg.output_file, '--format', 'kicadsexpr', cfg.input_file]
+    run_command(cmd)
+
+
 def eeschema_netlist_commands(cfg):
     # KiCad 5.1 vs 6 differences
     if cfg.ki5:
@@ -748,19 +771,13 @@ if __name__ == '__main__':
         create_user_hotkeys(cfg)
     # Make sure the user has sym-lib-table
     check_lib_table(cfg.user_sym_lib_table, cfg.sys_sym_lib_table)
-    # Interposer settings
-    check_interposer(args, logger, cfg)
     #
-    # Do all the work
+    # Setup filenames
     #
     input_file_no_ext = os.path.splitext(os.path.basename(cfg.input_file))[0]
     cfg.input_file = os.path.abspath(cfg.input_file)
     cfg.output_file_no_ext = os.path.join(output_dir, input_file_no_ext)
     error_level = 0
-    flog_out, flog_err, cfg.flog_int = get_log_files(output_dir, 'eeschema', also_interposer=cfg.enable_interposer)
-    if cfg.enable_interposer:
-        flog_out = subprocess.PIPE
-        atexit.register(dump_interposer_dialog, cfg)
     # Setup the output file name
     use_low_level_io = False
     if args.command == 'export':
@@ -786,70 +803,84 @@ if __name__ == '__main__':
     if cfg.wanted_output_file:
         logger.debug('Wanted output file: '+cfg.wanted_output_file)
         os.makedirs(os.path.dirname(cfg.wanted_output_file), exist_ok=True)
-    os.environ['KIAUTO_INTERPOSER_LOWLEVEL_IO'] = '1' if use_low_level_io else ''
-    # When using the interposer inform the output file name using the environment
-    setup_interposer_filename(cfg)
-    for retry in range(3):
+    #
+    # Do all the work
+    #
+    if args.command == 'netlist' and cfg.ki7:
+        eeschema_netlist_commands_cli(cfg)
         do_retry = False
-        problem = False
-        with recorded_xvfb(cfg, retry):
-            # Run Eeschema
-            logger.debug('Starting '+cfg.eeschema)
-            with PopenContext([cfg.eeschema, cfg.input_file], close_fds=True, start_new_session=True,
-                              bufsize=1, text=True, stderr=flog_err, stdout=flog_out) as eeschema_proc:
-                # Avoid patching our childs
-                os.environ['LD_PRELOAD'] = ''
-                cfg.eeschema_pid = eeschema_proc.pid
-                set_kicad_process(cfg, eeschema_proc.pid)
-                cfg.popen_obj = eeschema_proc
-                logger.debug('EEschema PID: '+str(eeschema_proc.pid))
-                start_queue(cfg)
-                # Wait for Eeschema
-                can_retry = wait_eeschema_start_by_msg(cfg) if cfg.use_interposer else wait_eeschema_start(cfg)
-                if eeschema_proc.poll() is not None:
-                    logger.debug('Checking if the X server still there')
-                    wait_xserver(cfg.output_dir, 0)
-                    if can_retry:
-                        do_retry = True
-                    else:
-                        problem = True
-                else:
-                    if args.command == 'export':
-                        # Export
-                        eeschema_plot_schematic(cfg)
-                    elif args.command == 'netlist':
-                        # Netlist
-                        eeschema_netlist_commands(cfg)
-                    elif args.command == 'bom_xml':
-                        # BoM XML
-                        eeschema_bom_xml_commands(cfg)
-                    elif args.command == 'run_erc':
-                        # Run ERC
-                        eeschema_run_erc_schematic(cfg)
-                        errors, warnings = eeschema_parse_erc(cfg)
-                        skip_err, skip_wrn = apply_filters(cfg, 'ERC error/s', 'ERC warning/s')
-                        errors = errors-skip_err
-                        warnings = warnings-skip_wrn
-                        if warnings > 0:
-                            logger.warning(str(warnings)+' ERC warnings detected')
-                            list_warnings(cfg)
-                        if errors > 0:
-                            logger.error(str(errors)+' ERC errors detected')
-                            list_errors(cfg)
-                            error_level = -errors
+        cfg.use_interposer = cfg.enable_interposer = False
+    else:
+        # Interposer settings
+        check_interposer(args, logger, cfg)
+        flog_out, flog_err, cfg.flog_int = get_log_files(output_dir, 'eeschema', also_interposer=cfg.enable_interposer)
+        if cfg.enable_interposer:
+            flog_out = subprocess.PIPE
+            atexit.register(dump_interposer_dialog, cfg)
+        os.environ['KIAUTO_INTERPOSER_LOWLEVEL_IO'] = '1' if use_low_level_io else ''
+        # When using the interposer inform the output file name using the environment
+        setup_interposer_filename(cfg)
+        for retry in range(3):
+            do_retry = False
+            problem = False
+            with recorded_xvfb(cfg, retry):
+                # Run Eeschema
+                logger.debug('Starting '+cfg.eeschema)
+                with PopenContext([cfg.eeschema, cfg.input_file], close_fds=True, start_new_session=True,
+                                  bufsize=1, text=True, stderr=flog_err, stdout=flog_out) as eeschema_proc:
+                    # Avoid patching our childs
+                    os.environ['LD_PRELOAD'] = ''
+                    cfg.eeschema_pid = eeschema_proc.pid
+                    set_kicad_process(cfg, eeschema_proc.pid)
+                    cfg.popen_obj = eeschema_proc
+                    logger.debug('EEschema PID: '+str(eeschema_proc.pid))
+                    start_queue(cfg)
+                    # Wait for Eeschema
+                    can_retry = wait_eeschema_start_by_msg(cfg) if cfg.use_interposer else wait_eeschema_start(cfg)
+                    if eeschema_proc.poll() is not None:
+                        logger.debug('Checking if the X server still there')
+                        wait_xserver(cfg.output_dir, 0)
+                        if can_retry:
+                            do_retry = True
                         else:
-                            logger.info('No errors')
-                    # Exit
-                    exit_eeschema(cfg)
-        if not do_retry:
-            break
-        logger.warning("Eeschema failed to start retrying ...")
-    if do_retry:
-        logger.error("Eeschema failed to start try with --time_out_scale")
-        error_level = EESCHEMA_ERROR
-    if problem:
-        logger.error("Eeschema failed to start or reported a fatal error")
-        error_level = EESCHEMA_ERROR
+                            problem = True
+                    else:
+                        if args.command == 'export':
+                            # Export
+                            eeschema_plot_schematic(cfg)
+                        elif args.command == 'netlist':
+                            # Netlist
+                            eeschema_netlist_commands(cfg)
+                        elif args.command == 'bom_xml':
+                            # BoM XML
+                            eeschema_bom_xml_commands(cfg)
+                        elif args.command == 'run_erc':
+                            # Run ERC
+                            eeschema_run_erc_schematic(cfg)
+                            errors, warnings = eeschema_parse_erc(cfg)
+                            skip_err, skip_wrn = apply_filters(cfg, 'ERC error/s', 'ERC warning/s')
+                            errors = errors-skip_err
+                            warnings = warnings-skip_wrn
+                            if warnings > 0:
+                                logger.warning(str(warnings)+' ERC warnings detected')
+                                list_warnings(cfg)
+                            if errors > 0:
+                                logger.error(str(errors)+' ERC errors detected')
+                                list_errors(cfg)
+                                error_level = -errors
+                            else:
+                                logger.info('No errors')
+                        # Exit
+                        exit_eeschema(cfg)
+            if not do_retry:
+                break
+            logger.warning("Eeschema failed to start retrying ...")
+        if do_retry:
+            logger.error("Eeschema failed to start try with --time_out_scale")
+            error_level = EESCHEMA_ERROR
+        if problem:
+            logger.error("Eeschema failed to start or reported a fatal error")
+            error_level = EESCHEMA_ERROR
     #
     # Exit clean-up
     #

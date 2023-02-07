@@ -25,7 +25,6 @@ PROG = 'eeschema_do'
 
 def test_bom_xml(test_dir):
     prj = 'good-project'
-    bom = prj+'.csv'
     ctx = context.TestContextSCH(test_dir, 'BoM_XML', prj)
     bom = ctx.board_file.replace(ctx.sch_ext, '.xml')
     if os.path.isfile(bom):
