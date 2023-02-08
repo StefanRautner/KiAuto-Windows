@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2022 Salvador E. Tropea
-# Copyright (c) 2022 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2022-2023 Salvador E. Tropea
+# Copyright (c) 2022-2023 Instituto Nacional de Tecnologïa Industrial
 # License: Apache 2.0
 # Project: KiAuto (formerly kicad-automation-scripts)
 import atexit
@@ -129,7 +129,8 @@ def collect_io_from_queue(cfg):
     cfg.collecting_io = True
 
 
-def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kicad_can_exit=False, with_windows=False):
+def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kicad_can_exit=False, with_windows=False,
+               dialog_interrupts=False):
     """ Wait for a string in the queue """
     if not cfg.use_interposer:
         return None
@@ -197,6 +198,8 @@ def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kic
                 dismiss_pcbnew_warning(cfg, title)
             else:
                 unknown_dialog(cfg, title)
+            if dialog_interrupts:
+                raise InterruptedError()
     if do_to:
         raise RuntimeError('Timed out waiting for `{}`'.format(strs))
 
@@ -282,7 +285,7 @@ def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, 
 
 def check_text_replace(cfg, name):
     """ Wait until we get the file name """
-    wait_queue(cfg, 'PANGO:'+name)
+    wait_queue(cfg, 'PANGO:'+name, dialog_interrupts=True)
 
 
 def paste_text_i(cfg, msg, text):
@@ -290,9 +293,16 @@ def paste_text_i(cfg, msg, text):
     # Paste the name
     cfg.logger.info(msg)
     wait_point(cfg)
-    text_replace(text)
-    # Look for the echo
-    check_text_replace(cfg, text)
+    retry = True
+    while retry:
+        retry = False
+        text_replace(text)
+        try:
+            # Look for the echo
+            check_text_replace(cfg, text)
+        except InterruptedError:
+            cfg.logger.debug('Interrupted by a dialog while waiting echo, retrying')
+            retry = True
     # Wait for KiCad to be sleeping
     wait_kicad_ready_i(cfg)
 
@@ -408,7 +418,7 @@ def dismiss_dialog(cfg, title, keys):
 
 
 def dismiss_error(cfg, title):
-    """ KiCad 6: Corrupted PCB/Schematic
+    """ KiCad 6/7: Corrupted PCB/Schematic
         KiCad 5: Newer KiCad needed  for PCB, missing sch lib """
     msgs = collect_dialog_messages(cfg, title)
     if "Error loading PCB '"+cfg.input_file+"'." in msgs:
@@ -432,6 +442,11 @@ def dismiss_error(cfg, title):
         # KiCad 6 loading a sheet, but sub-sheets are missing
         cfg.logger.error('Error loading schematic file. Missing schematic files?')
         exit(EESCHEMA_ERROR)
+    for msg in msgs:
+        if msg.startswith("Error loading schematic '"+cfg.input_file+"'."):
+            # KiCad 7 schematic loading error
+            cfg.logger.error('Error loading schematic file. Corrupted?')
+            exit(EESCHEMA_ERROR)
     unknown_dialog(cfg, title, msgs)
 
 
@@ -653,7 +668,7 @@ def wait_start_by_msg(cfg):
             if msg != '0:00:00':
                 log.info_progress('Elapsed time: '+msg)
                 with_elapsed = True
-        elif title == 'Error':
+        elif title == 'Error' or (cfg.ki7 and title == 'KiCad Schematic Editor Error'):
             dismiss_error(cfg, title)
         elif title == 'File Open Error':
             dismiss_file_open_error(cfg, title)
