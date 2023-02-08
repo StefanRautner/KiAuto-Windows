@@ -376,7 +376,10 @@ def print_layers_n(cfg, id_pcbnew, print_dialog_keys):
     # 2) Without WM we usually get "Color" selected
     # In both cases sending 4 Shit+Tab moves us to one of the layer columns.
     # From there Return prints and Escape closes the window.
-    xdotool(['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Return'])
+    keys = ['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Return']
+    if not cfg.ki7:
+        keys.insert(1, 'shift+Tab')
+    xdotool(keys)
     # Check it is open
     id2 = wait_for_window('Printer dialog', '^(Print|%s)$' % cfg.print_dlg_name, skip_id=id_print_dialog)
     id_printer_dialog = id2[1] if id2[0] == id_print_dialog else id2[0]
@@ -591,6 +594,8 @@ def export_gencad(cfg):
         keys = ['key', 'alt+f', 'x', 'g']
     else:
         keys = ['key', 'alt+f', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'KP_Space', 'Down', 'Return']
+        if cfg.ki7:
+            keys.insert(2, 'Down')
     if cfg.use_interposer:
         export_gencad_i(cfg, keys)
     else:
@@ -633,6 +638,8 @@ def export_vrml(cfg):
     else:
         keys = ['key', 'alt+f', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'Down', 'KP_Space', 'Down', 'Down',
                 'Return']
+        if cfg.ki7:
+            keys.insert(2, 'Down')
     if cfg.use_interposer:
         export_vrml_i(cfg, keys)
     else:

@@ -56,7 +56,7 @@ from kiauto.ui_automation import (PopenContext, xdotool, wait_for_window, wait_n
 
 TITLE_CONFIRMATION = '^Confirmation$'
 TITLE_REMAP_SYMBOLS = '^Remap Symbols$'
-TITLE_ERROR = '^Error$'
+TITLE_ERROR = '^(KiCad Schematic Editor )?Error$'
 TITLE_WARNING = '^Warning$'
 KI6_LOADING = r'^\[no schematic loaded\] '
 
@@ -87,6 +87,8 @@ def dismiss_library_error():
     wait_for_window(nf_title, nf_title, 3)
     if cfg.kicad_version >= KICAD_VERSION_5_99:
         logger.error('Eeschema created an error dialog, expect a fail')
+        if cfg.ki7:
+            exit(EESCHEMA_ERROR)
     else:
         logger.warning('Missing library, please fix it')
     xdotool(['search', '--onlyvisible', '--name', nf_title, 'windowfocus'])
