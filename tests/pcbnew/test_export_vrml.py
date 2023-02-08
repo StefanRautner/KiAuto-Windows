@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2022 Salvador E. Tropea
-# Copyright (c) 2022 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2022-2023 Salvador E. Tropea
+# Copyright (c) 2022-2023 Instituto Nacional de Tecnologïa Industrial
 # License: Apache 2.0
 # Project: KiAuto (formerly kicad-automation-scripts)
 """
@@ -12,7 +12,6 @@ pytest-3 --log-cli-level debug
 """
 import os
 import sys
-import re
 # Look for the 'utils' module from where the script is running
 script_dir = os.path.dirname(os.path.abspath(__file__))
 prev_dir = os.path.dirname(script_dir)
@@ -41,7 +40,7 @@ def test_export_vrml_2(test_dir):
     vrml_file = ctx.expect_out_file('good.wrl')
     with open(vrml_file, 'rt') as f:
         vrml = f.read()
-    models =['B02B-JWPF-SK-R.wrl', 'C_0402_1005Metric.wrl', 'R_0402_1005Metric.wrl']
+    models = ['B02B-JWPF-SK-R.wrl', 'C_0402_1005Metric.wrl', 'R_0402_1005Metric.wrl']
     for m in models:
         m_f = os.path.join('3DModels', m)
         ctx.expect_out_file(m_f)
