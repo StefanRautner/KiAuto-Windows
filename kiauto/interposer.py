@@ -411,7 +411,11 @@ def unknown_dialog(cfg, title, msgs=None, fatal=True):
 
 def dismiss_dialog(cfg, title, keys):
     cfg.logger.debug('Dismissing dialog `{}` using {}'.format(title, keys))
-    wait_for_window(title, title, 1)
+    try:
+        wait_for_window(title, title, 2)
+    except RuntimeError:
+        # The window was already closed
+        return
     if isinstance(keys, str):
         keys = [keys]
     xdotool(['key']+keys)
