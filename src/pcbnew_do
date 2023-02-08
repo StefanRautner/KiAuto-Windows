@@ -435,7 +435,7 @@ def run_drc_5_1(cfg):
     wait_point(cfg)
     xdotool(['key', 'alt+i', 'd'])
 
-    wait_for_window('DRC modal window', 'DRC Control')
+    wait_for_window('DRC modal window', cfg.drc_dialog_name)
     # Note: Refill zones on DRC gets saved in ~/.config/kicad/pcbnew as RefillZonesBeforeDrc
     # The space here is to enable the report of all errors for tracks
     logger.info('Enable reporting all errors for tracks')
@@ -449,7 +449,7 @@ def run_drc_5_1(cfg):
     wait_for_window('Report completed dialog', 'Disk File Report Completed')
     wait_point(cfg)
     xdotool(['key', 'Return'])
-    wait_for_window('DRC modal window', 'DRC Control')
+    wait_for_window('DRC modal window', cfg.drc_dialog_name)
 
     logger.info('Closing the DRC dialog')
     wait_point(cfg)
@@ -462,7 +462,7 @@ def run_drc_6_0(cfg):
     wait_point(cfg)
     xdotool(['key', 'ctrl+shift+i'])
     # Wait dialog
-    wait_for_window('DRC modal window', 'DRC Control')
+    wait_for_window('DRC modal window', cfg.drc_dialog_name)
     # Run the DRC
     logger.info('Run DRC')
     wait_point(cfg)
@@ -529,7 +529,7 @@ def run_drc_n(cfg):
 
 
 def run_drc_5_1_i(cfg):
-    control_dlg, _ = open_dialog_i(cfg, 'DRC Control', ['key', 'alt+i', 'd'], no_main=True)
+    control_dlg, _ = open_dialog_i(cfg, cfg.drc_dialog_name, ['key', 'alt+i', 'd'], no_main=True)
     # Enable report all errors for tracks and go to the file name
     # Here we added a shortcut for "Report all errors for tracks (slower)"
     send_keys(cfg, 'Enable reporting all errors for tracks', ['key', 'alt+r', 'alt+c'])
@@ -543,7 +543,7 @@ def run_drc_5_1_i(cfg):
 
 
 def run_drc_6_0_i(cfg):
-    control_dlg, _ = open_dialog_i(cfg, 'DRC Control', 'ctrl+shift+i', no_main=True)
+    control_dlg, _ = open_dialog_i(cfg, cfg.drc_dialog_name, 'ctrl+shift+i', no_main=True)
     # Run the DRC
     send_keys(cfg, 'Run DRC', 'Return')
     # Wait for the end of the DRC (at the end KiCad restores the Close button)

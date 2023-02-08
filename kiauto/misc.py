@@ -124,6 +124,11 @@ class Config(object):
             self.kicad_conf_dir += os.path.join(NIGHTLY, ng_ver)
             # Path to the Python module
             path.insert(0, '/usr/lib/kicad-nightly/lib/python3/dist-packages')
+            os.environ['KICAD_PATH'] = '/usr/share/kicad-nightly'
+            # KiCad 7.0.0 rc2 workaround
+            # KiCad bug: https://gitlab.com/kicad/code/kicad/-/issues/13815
+            v = ng_ver[0]
+            os.environ['KICAD'+v+'_FOOTPRINT_DIR'] = '/usr/share/kicad-nightly/footprints'
         # Detect KiCad version
         try:
             import pcbnew
@@ -155,6 +160,9 @@ class Config(object):
         if self.ki7:
             # Now part of the kicad-cli tool
             self.kicad2step = self.kicad_cli
+            self.drc_dialog_name = 'Design Rules Checker'
+        else:
+            self.drc_dialog_name = 'DRC Control'
         # Config file names
         if not self.ki5:
             self.kicad_conf_path = pcbnew.GetSettingsManager().GetUserSettingsPath()

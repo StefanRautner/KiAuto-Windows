@@ -57,17 +57,18 @@ def test_drc_fail_1(test_dir):
 def test_drc_fail_exclusions(test_dir):
     ctx = context.TestContext(test_dir, 'DRC_Error_Exclusions', 'fail-project')
     # Here we use -v to cover "info" log level
-    cmd = [PROG, '-v', 'run_drc', '-F']
+    cmd = [PROG, '-vvvvv', 'run_drc', '-F']
     ctx.run(cmd, 255)
     ctx.expect_out_file(REPORT)
     m = ctx.search_err(OUT_REX)
+    logging.error(ctx.err)
     assert m is not None
     assert m.group(1) == '0'
     assert m.group(2) == '1'
     ctx.clean_up()
 
 
-def test_drc_unco(test_dir):
+def test_drc_unco_1(test_dir):
     ctx = context.TestContext(test_dir, 'DRC_Unconnected', 'warning-project')
     cmd = [PROG, 'run_drc', '--output_name', 'drc.txt']
     ctx.run(cmd, 255)

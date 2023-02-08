@@ -55,6 +55,9 @@
       24,
       25,
       26,
+      30,
+      32,
+      33,
       34,
       35,
       36,
@@ -65,7 +68,7 @@
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "fail-project.kicad_prl",
+    "filename": "warning-project.kicad_prl",
     "version": 3
   },
   "project": {
