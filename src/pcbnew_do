@@ -744,12 +744,18 @@ def wait_ray_tracer(cfg):
     # I can't find a mechanism to determine if the render finished.
     # I think this is a bug in KiCad, you can save unfinished images!!!!
     logger.info('Waiting for the final render')
-    if cfg.detect_rt and not cfg.ki7:
+    if cfg.detect_rt:
         # Try to figure out meassuring the CPU usage
         end = time.clock_gettime(time.CLOCK_MONOTONIC) + cfg.wait_rt
         counter = 5
+        children = cfg.kicad_process.children(recursive=True)
+        logger.debug('pcbnew pid {}'.format(cfg.kicad_process.pid))
+        for child in children:
+            logger.debug('- pcbnew child pid {}'.format(child.pid))
         while (counter > 0) and (time.clock_gettime(time.CLOCK_MONOTONIC) < end):
             cpu_usage = cfg.kicad_process.cpu_percent(0.3)
+            for child in children:
+                cpu_usage += child.cpu_percent(0.3)
             if cpu_usage > 5:
                 if counter < 5:
                     counter = counter + 1
