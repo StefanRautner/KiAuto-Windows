@@ -57,8 +57,9 @@ def dump_interposer_dialog(cfg):
                 cfg.interposer_dialog.append('>>Interposer<<:{} (@{} D {})'.format(line[:-1], round(tm, 3), round(diff, 3)))
         except Empty:
             pass
-    for ln in cfg.interposer_dialog:
-        cfg.flog_int.write(ln+'\n')
+    if hasattr(cfg, 'interposer_dialog'):
+        for ln in cfg.interposer_dialog:
+            cfg.flog_int.write(ln+'\n')
     cfg.flog_int.close()
 
 
