@@ -612,7 +612,9 @@ def create_eeschema_config(cfg):
             eeconf = {'plot': plot_ops}
             eeconf['system'] = {"first_run_shown": True, "never_show_rescue_dialog": True}
             eeconf['appearance'] = {"show_sexpr_file_convert_warning": False, "color_theme": cfg.color_theme.lower()}
-            eeconf['window'] = {"size_x": cfg.rec_width, "size_y": cfg.rec_height}
+            eeconf['window'] = {"size_x": cfg.rec_width, "size_y": cfg.rec_height,
+                                # Select the user grid and the provided grid. X/Y the same.
+                                "grid": {"last_size": 7, "user_grid_x": "%d mil" % cfg.grid, "user_grid_y": "%d mil" % cfg.grid}}
             text = json.dumps(eeconf)
             text_file.write(text)
             logger.debug(text)
@@ -728,18 +730,19 @@ if __name__ == '__main__':
     export_parser.add_argument('--monochrome', '-m', help='Black and white output', action='store_true')
     export_parser.add_argument('--no_frame', '-F', help='No frame and title block', action='store_true')
     export_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file')
-    export_parser.add_argument('--color_theme', '-c', type=str, help='Name of the color theme [_builtin_default] (KiCad 6)',
+    export_parser.add_argument('--color_theme', '-c', type=str, help='Name of the color theme [_builtin_default] (KiCad 6+)',
                                default='_builtin_default')
-    export_parser.add_argument('--background_color', '-b', action='store_true', help='Use the background color (KiCad 6)')
+    export_parser.add_argument('--background_color', '-b', action='store_true', help='Use the background color (KiCad 6+)')
     export_parser.add_argument('--hpgl_origin', '-O', type=int, choices=range(4), default=0,
-                               help='HPGL origin: 0 bottom left, 1 centered, 2 page fit, 3 content fit (KiCad 6)')
-    export_parser.add_argument('--hpgl_pen_size', '-p', type=float, help='HPGL pen size in mm [0.4826] (KiCad 6)',
+                               help='HPGL origin: 0 bottom left, 1 centered, 2 page fit, 3 content fit (KiCad 6+)')
+    export_parser.add_argument('--hpgl_pen_size', '-p', type=float, help='HPGL pen size in mm [0.4826] (KiCad 6+)',
                                default=0.4826)
 
     erc_parser = subparsers.add_parser('run_erc', help='Run Electrical Rules Checker on a schematic')
     erc_parser.add_argument('--errors_filter', '-f', nargs=1, help='File with filters to exclude errors')
     erc_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file')
     erc_parser.add_argument('--warnings_as_errors', '-w', help='Treat warnings as errors', action='store_true')
+    erc_parser.add_argument('--grid', '-g', type=int, help='Grid size for the checks [mils] (KiCad 7)', default=50)
 
     netlist_parser = subparsers.add_parser('netlist', help='Create the netlist')
     netlist_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file')
@@ -762,6 +765,7 @@ if __name__ == '__main__':
     cfg.monochrome = getattr(args, 'monochrome', False)
     cfg.no_frame = getattr(args, 'no_frame', False)
     cfg.warnings_as_errors = getattr(args, 'warnings_as_errors', False)
+    cfg.grid = getattr(args, 'grid', 50)
     cfg.wait_start = args.wait_start
     cfg.color_theme = getattr(args, 'color_theme', '_builtin_default')
     cfg.background_color = getattr(args, 'background_color', False)
