@@ -22,6 +22,7 @@ KICAD_EXIT_MSG = '>>exit<<'
 INTERPOSER_OPS = 'interposer_options.txt'
 IGNORED_DIALOG_MSGS = {'The quick brown fox jumps over the lazy dog.', '0123456789'}
 BOGUS_FILENAME = '#'
+KIKIT_HIDE = 'Specify which components to hide'
 # These dialogs are asynchronous, they can pop-up at anytime.
 # One example is when the .kicad_wks is missing, KiCad starts drawing and then detects it.
 INFO_DIALOGS = {'KiCad PCB Editor Information', 'KiCad Schematic Editor Information'}
@@ -197,6 +198,9 @@ def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kic
             elif title == 'pcbnew Warning':
                 # KiCad 5 error during post-load, before releasing the CPU
                 dismiss_pcbnew_warning(cfg, title)
+            elif title.startswith(KIKIT_HIDE):
+                # Buggy KiKit plugin creating a dialog at start-up (many times)
+                pass
             else:
                 unknown_dialog(cfg, title)
             if dialog_interrupts:
@@ -689,5 +693,8 @@ def wait_start_by_msg(cfg):
             dismiss_remap_symbols(cfg, title)
         elif title in INFO_DIALOGS:
             dismiss_pcb_info(cfg, title)
+        elif title.startswith(KIKIT_HIDE):
+            # Buggy KiKit plugin creating a dialog at start-up (many times)
+            pass
         else:
             unknown_dialog(cfg, title)
