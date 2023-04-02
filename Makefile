@@ -114,6 +114,15 @@ test_docker_local_k6_1:
 	$(PY_COV) html
 	rm .coverage
 
+test_docker_local_k7:
+	rm -rf output
+	$(PY_COV) erase
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki7 \
+		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
+	$(PY_COV) report
+	$(PY_COV) html
+	rm .coverage
+
 test_docker_local_k7_1:
 	rm -rf output
 	$(PY_COV) erase
