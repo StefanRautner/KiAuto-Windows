@@ -66,10 +66,10 @@ def debug_output(res):
         logger.debug('- Output from command: '+res.stdout.decode())
 
 
-def run_command(command):
+def run_command(command, check=True):
     logger.debug('Executing: '+shlex.join(command))
     try:
-        res = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        res = subprocess.run(command, check=check, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error('Running {} returned {}'.format(e.cmd, e.returncode))
         debug_output(e)
@@ -239,6 +239,8 @@ def eeschema_plot_schematic_cli(cfg):
         cmd.append('--exclude-drawing-sheet')
     if not cfg.background_color:
         cmd.append('--no-background-color')
+    if not cfg.all_pages:
+        cmd.append('--plot-one')
     cmd.append(cfg.input_file)
     run_command(cmd)
 
@@ -694,7 +696,13 @@ def can_be_done_using_cli(command, cfg):
     if command in {'netlist', 'bom_xml'}:
         return True
     # Export can be partially done using the CLI
-    return command == 'export' and cfg.export_format in {'svg', 'pdf'} and cfg.all_pages
+    if command == 'export':
+        if cfg.export_format in {'svg', 'pdf'} and cfg.all_pages:
+            return True
+        # The kicad-cli for v8 can do all, try the command
+        res = run_command(['kicad-cli', 'sch', 'export', cfg.export_format], check=False)
+        return 'Usage: '+cfg.export_format in res
+    return False
 
 
 if __name__ == '__main__':
