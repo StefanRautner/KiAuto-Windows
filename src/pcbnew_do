@@ -46,7 +46,7 @@ from kiauto.file_util import (load_filters, wait_for_file_created_by_process, ap
 from kiauto.misc import (REC_W, REC_H, __version__, NO_PCB, PCBNEW_CFG_PRESENT, WAIT_START, WRONG_LAYER_NAME,
                          WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT,
                          CORRUPTED_PCB, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CFG_PRESENT,
-                         MISSING_TOOL)
+                         MISSING_TOOL, KICAD_VERSION_6_99)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, setup_interposer_filename,
                                create_interposer_print_options_file, wait_queue, wait_start_by_msg, wait_and_show_progress,
                                set_kicad_process, open_dialog_i, wait_kicad_ready_i, paste_bogus_filename, paste_text_i,
@@ -505,6 +505,9 @@ def run_drc_python(cfg):
     logger.debug("Re-filling zones")
     filler = pcbnew.ZONE_FILLER(cfg.board)
     filler.Fill(cfg.board.Zones())
+    if cfg.kicad_version > KICAD_VERSION_6_99 and os.environ.get('KICAD7_FOOTPRINT_DIR') is None:
+        # This is most probably a bug in the Python DRC code
+        os.environ['KICAD7_FOOTPRINT_DIR'] = '/usr/share/kicad/footprints/'
     logger.debug("Running DRC")
     pcbnew.WriteDRCReport(cfg.board, cfg.output_file, pcbnew.EDA_UNITS_MILLIMETRES, True)
     if cfg.save:
