@@ -28,12 +28,17 @@ lint:
 	flake8 . --count --statistics
 	rm eeschema_do.py pcbnew_do.py
 
-test_server_latest:
+test_server_ki5:
 	python3-coverage erase
 	pytest-3 --test_dir output
 	python3-coverage report
 
 test_server_ki6:
+	python3-coverage erase
+	pytest-3 --test_dir output
+	python3-coverage report
+
+test_server_ki7:
 	python3-coverage erase
 	pytest-3 --test_dir output
 	python3-coverage report
