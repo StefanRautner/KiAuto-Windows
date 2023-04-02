@@ -44,12 +44,9 @@ test_server_nightly:
 	python3-coverage report
 
 test: lint
-	# Force using the default color scheme
-	if [ -e $(HOME)/.config/kicadnightly/5.99/colors ] && [ -e output $(HOME)/.config/kicadnightly/5.99/colors.ok ] ; then rm -rf $(HOME)/.config/kicadnightly/5.99/colors.ok; fi
-	if [ -e $(HOME)/.config/kicadnightly/5.99/colors ] ; then mv $(HOME)/.config/kicadnightly/5.99/colors $(HOME)/.config/kicadnightly/5.99/colors.ok; fi
 	rm -rf output
 	$(PY_COV) erase
-	$(PYTEST) --test_dir output
+	KIAUTO_INTERPOSER_DISABLE=1 KIAUS_USE_NIGHTLY=7.0 $(PYTEST) --test_dir output
 	$(PY_COV) report
 	$(PY_COV) html
 	x-www-browser htmlcov/index.html
@@ -57,8 +54,6 @@ test: lint
 		tests/kicad6/kicad4-project/kicad4-project.kicad_pro tests/kicad6/kicad4-project/kicad4-project.kicad_sch \
 		tests/kicad6/kicad4-project/kicad4-project.pro-bak tests/kicad6/kicad4-project/rescue-backup/ \
 		tests/kicad6/kicad4-project/sym-lib-table
-	# Restore the colors scheme
-	mv $(HOME)/.config/kicadnightly/5.99/colors.ok $(HOME)/.config/kicadnightly/5.99/colors
 
 test_docker_local:
 	rm -rf output
@@ -114,6 +109,19 @@ test_docker_local_k6_1:
 	$(PY_COV) html
 	rm .coverage
 
+test_docker_local_k7_1:
+	rm -rf output
+	$(PY_COV) erase
+	# Run in the same directory to make the __pycache__ valid
+	# Also change the owner of the files to the current user (we run as root like in GitHub)
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki7 \
+		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
+	$(PY_COV) report
+	$(PY_COV) html
+	rm .coverage
+
+t1k7: test_docker_local_k7_1
+
 test_docker_local_ng:
 	rm -rf output
 	$(PY_COV) erase
@@ -122,7 +130,7 @@ test_docker_local_ng:
 #	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:nightly \
 #		/bin/bash -c "flake8 . --count --statistics ; KIAUS_USE_NIGHTLY=6.0 $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/ .coverage"
 	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:nightly \
-		/bin/bash -c "flake8 . --count --statistics ; KIAUS_USE_NIGHTLY=7.0 $(PYTEST) --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/ .coverage"
+		/bin/bash -c "flake8 . --count --statistics ; KIAUS_USE_NIGHTLY=7.0 $(PYTEST) --log-cli-level debug --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/ .coverage"
 	$(PY_COV) report
 	$(PY_COV) html
 	x-www-browser htmlcov/index.html
