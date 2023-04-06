@@ -26,6 +26,8 @@ KIKIT_HIDE = 'Specify which components to hide'
 # These dialogs are asynchronous, they can pop-up at anytime.
 # One example is when the .kicad_wks is missing, KiCad starts drawing and then detects it.
 INFO_DIALOGS = {'KiCad PCB Editor Information', 'KiCad Schematic Editor Information'}
+WARN_DIALOGS = {'KiCad PCB Editor Warning', 'KiCad Schematic Editor Warning'}
+ASYNC_DIALOGS = INFO_DIALOGS | WARN_DIALOGS
 
 
 def check_interposer(args, logger, cfg):
@@ -195,8 +197,9 @@ def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kic
             if title in INFO_DIALOGS:
                 # Async dialogs
                 dismiss_pcb_info(cfg, title)
-            elif title == 'pcbnew Warning':
+            elif title == 'pcbnew Warning' or title in WARN_DIALOGS:
                 # KiCad 5 error during post-load, before releasing the CPU
+                # KiCad 7 missing fonts
                 dismiss_pcbnew_warning(cfg, title)
             elif title.startswith(KIKIT_HIDE):
                 # Buggy KiKit plugin creating a dialog at start-up (many times)
@@ -264,17 +267,20 @@ def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, 
         name = [name]
     name_w_pre = [pre_gtk+f for f in name]
     # Add the async dialogs
-    for t in INFO_DIALOGS:
+    for t in ASYNC_DIALOGS:
         name_w_pre.append(pre_gtk_title+t)
     # Wait for our dialog or any async dialog
     # Note: wait_queue won't dismiss them because we use "with_windows=True"
     while True:
         res = wait_queue(cfg, name_w_pre, with_windows=True)
         title = res[len(pre_gtk_title):]
-        if title not in INFO_DIALOGS:
+        if title not in ASYNC_DIALOGS:
             break
-        # Get rid of the info dialog
-        dismiss_pcb_info(cfg, title)
+        if title in INFO_DIALOGS:
+            # Get rid of the info dialog
+            dismiss_pcb_info(cfg, title)
+        else:
+            dismiss_pcbnew_warning(cfg, title)
         # Send the keys again
         xdotool(keys)
     name = res[len(pre_gtk):]
@@ -497,12 +503,14 @@ def dismiss_warning(cfg, title):
 
 
 def dismiss_pcbnew_warning(cfg, title):
-    """ Pad in invalid layer """
+    """ Pad in invalid layer
+        Missing font """
     msgs = collect_dialog_messages(cfg, title)
     # More generic cases
     for msg in msgs:
         # Warning about pad using an invalid layer
-        if msg.endswith("could not find valid layer for pad"):
+        # Missing font
+        if msg.endswith("could not find valid layer for pad") or re.search(r"Font '(.*)' not found; substituting '(.*)'", msg):
             cfg.logger.warning(msg)
             dismiss_dialog(cfg, title, 'Return')
             return
@@ -619,13 +627,6 @@ def wait_and_show_progress(cfg, msg, regex_str, trigger, msg_reg, skip_match=Non
 
 
 def wait_start_by_msg(cfg):
-    cfg.logger.info('Waiting for PCB new window ...')
-    pre = 'GTK:Window Title:'
-    pre_l = len(pre)
-    cfg.logger.debug('Waiting pcbnew to start and load the PCB')
-    # Inform the elapsed time for slow loads
-    pres = [pre, 'PANGO:0:']
-    elapsed_r = re.compile(r'PANGO:(\d:\d\d:\d\d)')
     if cfg.is_pcbnew:
         kind = 'PCB'
         prg_name = 'Pcbnew'
@@ -634,13 +635,20 @@ def wait_start_by_msg(cfg):
         kind = 'Schematic'
         prg_name = 'Eeschema'
         unsaved = ' noname.sch'
+    cfg.logger.info('Waiting for {} window ...'.format(prg_name))
+    pre = 'GTK:Window Title:'
+    pre_l = len(pre)
+    cfg.logger.debug('Waiting {} to start and load the {}'.format(prg_name, kind))
+    # Inform the elapsed time for slow loads
+    pres = [pre, 'PANGO:0:']
+    elapsed_r = re.compile(r'PANGO:(\d:\d\d:\d\d)')
     loading_msg = 'Loading '+kind
     prg_msg = prg_name+' —'
     with_elapsed = False
     while True:
         # Wait for any window
         res = wait_queue(cfg, pres, starts=True, timeout=cfg.wait_start, with_windows=True)
-        cfg.logger.debug('wait_pcbew_start_by_msg got '+res)
+        cfg.logger.debug('wait_start_by_msg got '+res)
         match = elapsed_r.match(res)
         title = res[pre_l:]
         if not match and with_elapsed:
@@ -687,7 +695,7 @@ def wait_start_by_msg(cfg):
             dismiss_already_running(cfg, title)
         elif title == 'Warning':
             dismiss_warning(cfg, title)
-        elif title == 'pcbnew Warning':
+        elif title == 'pcbnew Warning' or title in WARN_DIALOGS:
             dismiss_pcbnew_warning(cfg, title)
         elif title == 'Remap Symbols':
             dismiss_remap_symbols(cfg, title)
