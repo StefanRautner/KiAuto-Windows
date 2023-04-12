@@ -71,9 +71,10 @@ class TestContext(object):
         else:
             # self.kicad_cfg_dir = pcbnew.SETTINGS_MANAGER.GetUserSettingsPath().replace('/kicad/', '/kicadnightly/')
             self.kicad_cfg_dir = pcbnew.SETTINGS_MANAGER.GetUserSettingsPath()
-            self.board_dir = '../kicad'+str(major)
+            id = str(major) if minor < 99 else str(major+1)
+            self.board_dir = '../kicad'+id
             self.sch_ext = '.kicad_sch'
-            self.ref_dir = 'tests/reference/'+str(major)
+            self.ref_dir = 'tests/reference/'+id
             self.pro_ext = '.kicad_pro'
             self.pcbnew_conf = os.path.join(self.kicad_cfg_dir, 'pcbnew.json')
             self.eeschema_conf = os.path.join(self.kicad_cfg_dir, 'eeschema.json')
