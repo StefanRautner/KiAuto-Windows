@@ -445,6 +445,9 @@ def eeschema_run_erc_schematic_6_0_n(cfg):
 
 
 def eeschema_run_erc_schematic_6_0_i(cfg):
+    # KiCad 7.99 particularities:
+    # 1. Forces ".rpt" in the name, no matter what name was selected in the dialog and no matter if it already has an extension
+    # 2. The ERC dialog isn't destroyed, most probably hidden
     # Open the ERC dialog
     dialog, _ = open_dialog_i(cfg, 'Electrical Rules Checker', 'ctrl+shift+i', no_main=True)
     # Run the ERC
@@ -457,9 +460,9 @@ def eeschema_run_erc_schematic_6_0_i(cfg):
     paste_bogus_filename(cfg)
     send_keys(cfg, 'Create the report', 'Return', closes=file_dlg, delay_io=True)
     # Wait until created
-    wait_create_i(cfg, 'ERC')
+    wait_create_i(cfg, 'ERC', forced_ext='rpt')
     # Close the ERC dialog
-    send_keys(cfg, 'Exit ERC', 'Escape', closes=dialog)
+    send_keys(cfg, 'Exit ERC', 'Escape', closes=dialog, no_destroy=cfg.ki8)
 
 
 def eeschema_run_erc_schematic(cfg):
