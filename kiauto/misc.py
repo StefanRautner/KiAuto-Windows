@@ -46,6 +46,7 @@ TIME_OUT_MULT = 1.0
 
 KICAD_VERSION_5_99 = 5099000
 KICAD_VERSION_6_99 = 6099000
+KICAD_VERSION_7_99 = 7099000
 KICAD_SHARE = '/usr/share/kicad/'
 KICAD_NIGHTLY_SHARE = '/usr/share/kicad-nightly/'
 
@@ -125,10 +126,6 @@ class Config(object):
             # Path to the Python module
             path.insert(0, '/usr/lib/kicad-nightly/lib/python3/dist-packages')
             os.environ['KICAD_PATH'] = '/usr/share/kicad-nightly'
-            # KiCad 7.0.0 rc2 workaround
-            # KiCad bug: https://gitlab.com/kicad/code/kicad/-/issues/13815
-            v = ng_ver[0]
-            os.environ['KICAD'+v+'_FOOTPRINT_DIR'] = '/usr/share/kicad-nightly/footprints'
         # Detect KiCad version
         try:
             import pcbnew
@@ -155,8 +152,9 @@ class Config(object):
         logger.debug('Detected KiCad v{}.{}.{} ({} {})'.format(self.kicad_version_major, self.kicad_version_minor,
                      self.kicad_version_patch, kicad_version, self.kicad_version))
         self.ki5 = self.kicad_version < KICAD_VERSION_5_99
-        self.ki6 = not self.ki5 and self.kicad_version < KICAD_VERSION_6_99
-        self.ki7 = not self.ki5 and not self.ki6
+        self.ki6 = self.kicad_version >= KICAD_VERSION_5_99
+        self.ki7 = self.kicad_version >= KICAD_VERSION_6_99
+        self.ki8 = self.kicad_version >= KICAD_VERSION_7_99
         if self.ki7:
             # Now part of the kicad-cli tool
             self.kicad2step = self.kicad_cli
@@ -186,6 +184,7 @@ class Config(object):
         else:
             self.conf_kicad_json = False
         # Read the environment redefinitions used by KiCad
+        self.env = {}
         if os.path.isfile(self.conf_kicad):
             self.load_kicad_environment(logger)
             if 'KICAD_CONFIG_HOME' in self.env and self.ki5:
@@ -225,6 +224,29 @@ class Config(object):
         # - hotkeys
         self.conf_hotkeys = os.path.join(self.kicad_conf_path, 'user.hotkeys')
         self.conf_hotkeys_bkp = None
+        # share path
+        kpath = os.environ.get('KICAD_PATH')
+        if kpath is None and self.env:
+            kpath = self.env.get('KICAD_PATH')
+        if kpath is None:
+            if os.path.isdir(KICAD_SHARE):
+                kpath = KICAD_SHARE
+            elif os.path.isdir(KICAD_NIGHTLY_SHARE):
+                kpath = KICAD_NIGHTLY_SHARE
+        if kpath is None:
+            logger.warning('Missing KiCad share dir')
+        else:
+            logger.debug('KiCad share dir: '+kpath)
+            vname = 'KICAD'+str(self.kicad_version_major)+'_FOOTPRINT_DIR'
+            # KiCad 7.0.0 rc2 workaround (also 7.0.1 and 7.99 april 2023)
+            # KiCad bug: https://gitlab.com/kicad/code/kicad/-/issues/13815
+            if vname not in os.environ:
+                # Footprint dir not defined, and needed for DRC
+                if self.env and vname in self.env:
+                    os.environ[vname] = self.env[vname]
+                else:
+                    os.environ[vname] = os.path.join(kpath, 'footprints')
+                logger.debug('Defining {} = {}'.format(vname, os.environ[vname]))
         # - sym-lib-table
         self.user_sym_lib_table = os.path.join(self.kicad_conf_path, 'sym-lib-table')
         self.user_fp_lib_table = os.path.join(self.kicad_conf_path, 'fp-lib-table')
@@ -234,15 +256,18 @@ class Config(object):
             # 20200912: sym-lib-table is missing
             self.sys_sym_lib_table.insert(0, KICAD_NIGHTLY_SHARE+'template/sym-lib-table')
             self.sys_fp_lib_table.insert(0, KICAD_NIGHTLY_SHARE+'template/fp-lib-table')
+        if kpath is not None:
+            self.sys_sym_lib_table.insert(0, os.path.join(kpath, 'template/sym-lib-table'))
+            self.sys_fp_lib_table.insert(0, os.path.join(kpath, 'template/fp-lib-table'))
         # Some details about the UI
         if not self.ki5:
             # KiCad 5.99.0
             # self.ee_window_title = r'\[.*\] — Eeschema$'  # "PROJECT [HIERARCHY_PATH] - Eeschema"
-            # KiCad 6.x
-            if self.ki6:
-                self.ee_window_title = r'\[.*\] — Schematic Editor$'  # "PROJECT [HIERARCHY_PATH] - Schematic Editor"
-            else:
+            if self.ki7:
                 self.ee_window_title = r'.* — Schematic Editor$'  # "SHEET [HIERARCHY_PATH]? - Schematic Editor"
+            else:
+                # KiCad 6.x
+                self.ee_window_title = r'\[.*\] — Schematic Editor$'  # "PROJECT [HIERARCHY_PATH] - Schematic Editor"
             self.pn_window_title = r'.* — PCB Editor$'  # "PROJECT - PCB Editor"
             self.pn_simple_window_title = 'PCB Editor'
             kind = 'PCB' if self.is_pcbnew else 'Schematic'
