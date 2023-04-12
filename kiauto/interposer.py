@@ -341,7 +341,7 @@ def setup_interposer_filename(cfg, fn=None):
         os.remove(BOGUS_FILENAME)
 
 
-def send_keys(cfg, msg, keys, closes=None, delay_io=False):
+def send_keys(cfg, msg, keys, closes=None, delay_io=False, no_destroy=False):
     cfg.logger.info(msg)
     wait_point(cfg)
     if isinstance(keys, str):
@@ -350,14 +350,21 @@ def send_keys(cfg, msg, keys, closes=None, delay_io=False):
         collect_io_from_queue(cfg)
     xdotool(keys)
     if closes is not None:
-        if isinstance(closes, str):
-            closes = [closes]
-        for w in closes:
-            wait_queue(cfg, 'GTK:Window Destroy:'+w)
+        if no_destroy:
+            wait_close_dialog_i(cfg)
+        else:
+            if isinstance(closes, str):
+                closes = [closes]
+            for w in closes:
+                try:
+                    wait_queue(cfg, 'GTK:Window Destroy:'+w, dialog_interrupts=True)
+                except InterruptedError:
+                    # KiCad 7.99
+                    xdotool(keys)
         wait_kicad_ready_i(cfg)
 
 
-def wait_create_i(cfg, name, fn=None):
+def wait_create_i(cfg, name, fn=None, forced_ext=None):
     """ Wait for open+close of the file.
         Also look for them in the collected_io messages.
         And if we just get close forget about the open. """
@@ -365,8 +372,9 @@ def wait_create_i(cfg, name, fn=None):
     wait_point(cfg)
     if fn is None:
         fn = cfg.output_file
-    open_msg = 'IO:open:'+fn
-    close_msg = 'IO:close:'+fn
+    fn_kicad = fn+'.'+forced_ext if forced_ext and cfg.ki8 else fn
+    open_msg = 'IO:open:'+fn_kicad
+    close_msg = 'IO:close:'+fn_kicad
     if cfg.collecting_io:
         cfg.collecting_io = False
         got_open = open_msg in cfg.collected_io
@@ -385,6 +393,8 @@ def wait_create_i(cfg, name, fn=None):
     else:
         wait_queue(cfg, close_msg, starts=True)
     wait_kicad_ready_i(cfg)
+    if forced_ext and cfg.ki8 and os.path.isfile(fn_kicad):
+        os.rename(fn_kicad, fn)
 
 
 def collect_dialog_messages(cfg, title):
@@ -588,11 +598,11 @@ def exit_kicad_i(cfg):
         xdotool(['key', 'ctrl+q'])
 
 
-# def wait_close_dialog_i(cfg):
-#     """ Wait for the end of the main loop for the dialog.
-#         Then the main loop for the parent exits and enters again. """
-#     wait_queue(cfg, 'GTK:Main:Out', times=2)
-#     wait_queue(cfg, 'GTK:Main:In')
+def wait_close_dialog_i(cfg):
+    """ Wait for the end of the main loop for the dialog.
+        Then the main loop for the parent exits and enters again. """
+    wait_queue(cfg, 'GTK:Main:Out')
+    wait_queue(cfg, 'GTK:Main:In')
 
 
 def wait_and_show_progress(cfg, msg, regex_str, trigger, msg_reg, skip_match=None, with_windows=False):
