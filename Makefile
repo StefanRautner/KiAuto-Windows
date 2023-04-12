@@ -81,7 +81,7 @@ test_docker_local_1:
 	# Run in the same directory to make the __pycache__ valid
 	# Also change the owner of the files to the current user (we run as root like in GitHub)
 	# KIAUTO_INTERPOSER_DISABLE=1
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:latest \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki5 \
 		/bin/bash -c "$(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad5/ .coverage"
 	#$(PY_COV) report
 	#$(PY_COV) html
@@ -89,7 +89,7 @@ test_docker_local_1:
 
 test_docker_local_1_ni:
 	rm -rf output
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:latest \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki5 \
 		/bin/bash -c "export KIAUTO_INTERPOSER_DISABLE=1; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad5/ .coverage"
 
 test_docker_local_k6:
@@ -97,7 +97,7 @@ test_docker_local_k6:
 	$(PY_COV) erase
 	# Run in the same directory to make the __pycache__ valid
 	# Also change the owner of the files to the current user (we run as root like in GitHub)
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki6 \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki6 \
 		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
 	$(PY_COV) report
 	$(PY_COV) html
@@ -108,7 +108,7 @@ test_docker_local_k6_1:
 	$(PY_COV) erase
 	# Run in the same directory to make the __pycache__ valid
 	# Also change the owner of the files to the current user (we run as root like in GitHub)
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki6 \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki6 \
 		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
 	$(PY_COV) report
 	$(PY_COV) html
@@ -117,7 +117,7 @@ test_docker_local_k6_1:
 test_docker_local_k7:
 	rm -rf output
 	$(PY_COV) erase
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki7 \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki7 \
 		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
 	$(PY_COV) report
 	$(PY_COV) html
@@ -128,13 +128,21 @@ test_docker_local_k7_1:
 	$(PY_COV) erase
 	# Run in the same directory to make the __pycache__ valid
 	# Also change the owner of the files to the current user (we run as root like in GitHub)
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" setsoft/kicad_auto_test:ki7 \
-		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki7 \
+		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad7/ .coverage"
 	$(PY_COV) report
 	$(PY_COV) html
 	rm .coverage
 
 t1k7: test_docker_local_k7_1
+
+test_docker_local_k8_1:
+	rm -rf output
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:nightly \
+		/bin/bash -c "$(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad8/ .coverage.*"
+	rm .coverage.*
+
+t1k8: test_docker_local_k8_1
 
 test_docker_local_ng:
 	rm -rf output
