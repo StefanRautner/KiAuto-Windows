@@ -1,3 +1,9 @@
+kiauto (2.2.4-1) stable; urgency=medium
+
+  * Support for KiCad 7.99
+
+ -- Salvador E. Tropea <salvador@inti.gob.ar>  Wed, 12 Apr 2023 13:14:41 -0300
+
 kiauto (2.2.3-1) stable; urgency=medium
 
   * Added support for KiCad warnings about missing fonts.
