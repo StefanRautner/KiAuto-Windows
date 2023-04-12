@@ -163,10 +163,11 @@ def remove_lib_table(fname):
 
 def check_lib_table(fuser, fsys):
     if not os.path.isfile(fuser):
-        logger.debug('Missing default sym-lib-table')
+        logger.debug('Missing default '+os.path.basename(fuser))
         for f in fsys:
             if os.path.isfile(f):
                 shutil.copy2(f, fuser)
+                logger.debug('Copied {} to {}'.format(f, fuser))
                 return
         logger.warning('Missing default system symbol table '+fsys[0] +
                        ' creating an empty one')  # pragma: no cover
