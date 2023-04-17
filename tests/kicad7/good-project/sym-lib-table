@@ -1,4 +1,4 @@
 (sym_lib_table
-  (lib (name good-project-rescue)(type Legacy)(uri ${KIPRJMOD}/good-project-rescue.lib)(options "")(descr ""))
-  (lib (name power)(type Legacy)(uri ${KICAD_SYMBOL_DIR}/power.lib)(options "")(descr "Power symbols, special power flags"))
+  (version 7)
+  (lib (name "good-project-rescue")(type "KiCad")(uri "${KIPRJMOD}/good-project-rescue.kicad_sym")(options "")(descr ""))
 )
