@@ -139,18 +139,18 @@ def list_errors(cfg):
     for err in cfg.errs:
         if err:
             if "; Severity: warning" in err:
-                logger.warning(err.replace("; Severity: warning", ''))
+                logger.warning(re.sub(" +; Severity: warning\n?", '', err))
             else:
-                logger.error(err.replace("; Severity: error", ''))
+                logger.error(re.sub(" +; Severity: error\n?", '', err))
 
 
 def list_warnings(cfg):
     for wrn in cfg.wrns:
         if wrn:
             if "; Severity: error" in wrn:
-                logger.error(wrn.replace("; Severity: error", ''))
+                logger.error(re.sub(" +; Severity: error\n?", ''), wrn)
             else:
-                logger.warning(wrn.replace("; Severity: warning", ''))
+                logger.warning(re.sub(" +; Severity: warning\n?", '', wrn))
 
 
 def check_kicad_config_dir(cfg):
