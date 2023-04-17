@@ -415,7 +415,7 @@ def wait_point(cfg):
         input('Press a key')
 
 
-def capture_window_region(window_id, x, y, w, h, name):
+def capture_window_region(window_id, x, y, w, h, name, to_capture=None):
     """ Capture a region of a window to a file """
     geometry = '{}x{}+{}+{}'.format(w, h, x, y)
     logger.debug('Capturing region {} from window {}'.format(geometry, window_id))
@@ -423,7 +423,8 @@ def capture_window_region(window_id, x, y, w, h, name):
     if not shutil.which('import'):
         logger.error("import isn't installed, please install it.\nThis is part of ImageMagick and GraphicsMagic packages.")
         sys.exit(MISSING_TOOL)
-    res = check_output(['import', '-window', str(window_id), '-crop', geometry, name], stderr=DEVNULL).decode()
+    res = check_output(['import', '-window', str(window_id), '-crop', geometry, name], stderr=DEVNULL,
+                       timeout=to_capture).decode()
     logger.debug('Import output: ' + res)
 
 
@@ -434,10 +435,10 @@ def wait_window_get_ref(window_id, x, y, w, h):
     capture_window_region(window_id, x, y, w, h, "wait_ref.png")
 
 
-def wait_window_change(window_id, x, y, w, h, time_out):
+def wait_window_change(window_id, x, y, w, h, time_out, to_capture):
     """ Waits for a change in a window region """
     for i in range(int(time_out + 0.9)):
-        capture_window_region(window_id, x, y, w, h, "current.png")
+        capture_window_region(window_id, x, y, w, h, "current.png", to_capture)
         current = os.path.join(img_tmp_dir, "current.png")
         wait_ref = os.path.join(img_tmp_dir, "wait_ref.png")
         difference = os.path.join(img_tmp_dir, "difference.png")

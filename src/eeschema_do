@@ -417,8 +417,10 @@ def eeschema_run_erc_schematic_5_1_i(cfg):
 def eeschema_run_erc_schematic_6_0_n(cfg):
     # Open the ERC dialog
     keys = ['key', 'Escape', 'ctrl+shift+i']
-    id = open_dialog_with_retry('Open Tools->Electrical Rules Checker', keys, 'Electrical Rules Checker dialog',
-                                'Electrical Rules Checker', cfg)
+    erc_name = 'Electrical Rules Checker dialog'
+    erc_title = 'Electrical Rules Checker'
+    erc_msg = 'Open Tools->Electrical Rules Checker'
+    id = open_dialog_with_retry(erc_msg, keys, erc_name, erc_title, cfg)
     wait_point(cfg)
     # Run the ERC
     logger.info('Run ERC')
@@ -428,13 +430,44 @@ def eeschema_run_erc_schematic_6_0_n(cfg):
     #
     # Currently is impossible to know when it finished.
     #
-    wait_window_change(id[0], 108, 27, 100, 10, 45*cfg.time_out_scale)
+    try_again = False
+    try:
+        wait_window_change(id[0], 108, 27, 100, 10, 45*cfg.time_out_scale, 3*cfg.time_out_scale)
+    except subprocess.TimeoutExpired:
+        try_again = True
+    if try_again:
+        # KiCad 7.0.2 bug, closes ERC dialog after finishing
+        logger.warning('Time out capturing from the '+erc_name+', trying to open it again')
+        id = open_dialog_with_retry(erc_msg, keys, erc_name, erc_title, cfg)
     # Save the report
     logger.info('Open the save dialog')
     wait_point(cfg)
-    xdotool(['key', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Return'])
+    keys_save = ['key', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Return']
+    xdotool(keys_save)
     # Wait for the save dialog
-    wait_for_window('ERC File save dialog', 'Save Report to File')
+    try_again = False
+    try:
+        wait_for_window('ERC File save dialog', 'Save Report to File')
+    except RuntimeError:
+        if cfg.ki7:
+            try_again = True
+        else:
+            raise
+    if try_again:
+        # KiCad 7.0.2 bug, closes ERC dialog after finishing
+        found = False
+        try:
+            wait_for_window(erc_name, erc_title, timeout=1)
+            found = True
+        except RuntimeError:
+            pass
+        if found:
+            logger.error(erc_name+' not responding')
+            exit(EESCHEMA_ERROR)
+        logger.warning(erc_name+' suddenly closed, trying to open it again')
+        id = open_dialog_with_retry(erc_msg, keys, erc_name, erc_title, cfg)
+        xdotool(keys_save)
+        wait_for_window('ERC File save dialog', 'Save Report to File')
     # Paste the name
     logger.info('Pasting output file')
     wait_point(cfg)
@@ -635,7 +668,8 @@ def create_eeschema_config(cfg):
             eeconf['appearance'] = {"show_sexpr_file_convert_warning": False, "color_theme": cfg.color_theme.lower()}
             eeconf['window'] = {"size_x": cfg.rec_width, "size_y": cfg.rec_height,
                                 # Select the user grid and the provided grid. X/Y the same.
-                                "grid": {"last_size": 7, "user_grid_x": "%d mil" % cfg.grid, "user_grid_y": "%d mil" % cfg.grid}}
+                                "grid": {"last_size": 7, "user_grid_x": "%d mil" % cfg.grid,
+                                         "user_grid_y": "%d mil" % cfg.grid}}
             text = json.dumps(eeconf)
             text_file.write(text)
             logger.debug(text)
