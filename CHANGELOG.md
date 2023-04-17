@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Workaround for bogus KiCad 7.0.2 error about missing simulation model for
   power symbols.
+- Workaround for KiCad 7.0.2 closing the ERC dialog.
 
 
 ## [2.2.4] - 2023-04-12

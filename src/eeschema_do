@@ -455,13 +455,23 @@ def eeschema_run_erc_schematic_6_0_i(cfg):
     # 1. Forces ".rpt" in the name, no matter what name was selected in the dialog and no matter if it already has an extension
     # 2. The ERC dialog isn't destroyed, most probably hidden
     # Open the ERC dialog
-    dialog, _ = open_dialog_i(cfg, 'Electrical Rules Checker', 'ctrl+shift+i', no_main=True)
+    title = 'Electrical Rules Checker'
+    dialog, _ = open_dialog_i(cfg, title, 'ctrl+shift+i', no_main=True)
     # Run the ERC
     send_keys(cfg, 'Run ERC', 'Return')
     # Wait for completion. The Close button is refreshed at the end
     wait_queue(cfg, 'GTK:Button Label:C_lose')
     # Save the report
-    file_dlg, _ = open_dialog_i(cfg, 'Save Report to File', 'alt+s')
+    reopen = False
+    try:
+        # Catch the ERC unintentional close
+        file_dlg, _ = open_dialog_i(cfg, 'Save Report to File', 'alt+s', raise_if=['GTK:Window Destroy:'+title])
+    except InterruptedError:
+        reopen = True
+    if reopen:
+        # KiCad 7.0.2 bug, in some cases the dialog is closed, we just need to open it again
+        dialog, _ = open_dialog_i(cfg, title, 'ctrl+shift+i', no_main=True)
+        file_dlg, _ = open_dialog_i(cfg, 'Save Report to File', 'alt+s')
     # Paste the output file
     paste_bogus_filename(cfg)
     send_keys(cfg, 'Create the report', 'Return', closes=file_dlg, delay_io=True)

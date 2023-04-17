@@ -253,7 +253,7 @@ def wait_kicad_ready_i(cfg, swaps=0, kicad_can_exit=False):
     return res
 
 
-def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, extra_msg=None):
+def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, extra_msg=None, raise_if=None):
     wait_point(cfg)
     # Wait for KiCad to be sleeping
     wait_kicad_ready_i(cfg)
@@ -266,6 +266,8 @@ def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, 
     if isinstance(name, str):
         name = [name]
     name_w_pre = [pre_gtk+f for f in name]
+    if raise_if is not None:
+        name_w_pre.extend(raise_if)
     # Add the async dialogs
     for t in ASYNC_DIALOGS:
         name_w_pre.append(pre_gtk_title+t)
@@ -273,6 +275,8 @@ def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, 
     # Note: wait_queue won't dismiss them because we use "with_windows=True"
     while True:
         res = wait_queue(cfg, name_w_pre, with_windows=True)
+        if raise_if is not None and res in raise_if:
+            raise InterruptedError()
         title = res[len(pre_gtk_title):]
         if title not in ASYNC_DIALOGS:
             break
