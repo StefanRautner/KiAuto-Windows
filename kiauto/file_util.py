@@ -98,6 +98,10 @@ def load_filters(cfg, file):
         logger.info('Loaded {} error filters from `{}`'.format(fl, file))
 
 
+def add_filter(cfg, id, regex):
+    cfg.err_filters.append((id, regex))
+
+
 def apply_filters(cfg, err_name, wrn_name):
     """ Apply the error filters to the list of errors and unconnecteds """
     if len(cfg.err_filters) == 0:

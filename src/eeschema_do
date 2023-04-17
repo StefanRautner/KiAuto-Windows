@@ -42,10 +42,11 @@ logger = None
 from kiauto.file_util import (load_filters, wait_for_file_created_by_process, apply_filters, list_errors, list_warnings,
                               check_kicad_config_dir, restore_config, backup_config, check_lib_table, create_user_hotkeys,
                               check_input_file, memorize_project, restore_project, get_log_files, create_kicad_config,
-                              set_time_out_scale as set_time_out_scale_f)
+                              set_time_out_scale as set_time_out_scale_f, add_filter)
 from kiauto.misc import (REC_W, REC_H, __version__, NO_SCHEMATIC, EESCHEMA_CFG_PRESENT, KICAD_CFG_PRESENT,
                          WAIT_START, WRONG_SCH_NAME, EESCHEMA_ERROR, Config, KICAD_VERSION_5_99, WONT_OVERWRITE,
-                         USER_HOTKEYS_PRESENT, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CLI_ERROR)
+                         USER_HOTKEYS_PRESENT, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CLI_ERROR,
+                         KICAD_VERSION_7_0_3)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, wait_start_by_msg,
                                set_kicad_process, open_dialog_i,
                                paste_output_file_i, exit_kicad_i, paste_text_i, wait_queue,
@@ -321,6 +322,11 @@ def eeschema_parse_erc(cfg):
             if cfg.kicad_version >= KICAD_VERSION_5_99 and i < len(lines):
                 # KiCad 6 moved the severity to the next line
                 line = lines[i+1]
+                # KiCad 7.0.2 bug: a message with two extra \n
+                # Error reading simulation model from symbol '#PWR03':\nFailed to read simulation model from fields.\n
+                if '; Severity' not in line and i+3 < len(lines) and lines[i+2] == '':
+                    msg += ' '+line
+                    line = lines[i+3]
             # Discard messages explicitly excluded using the GUI
             excluded = '(excluded)' in line
             if r'Severity: error' in line:
@@ -785,8 +791,13 @@ if __name__ == '__main__':
     # Make sure the input file exists and has an extension
     check_input_file(cfg, NO_SCHEMATIC, WRONG_SCH_NAME)
     # Load filters
-    if args.command == 'run_erc' and args.errors_filter:
-        load_filters(cfg, args.errors_filter[0])
+    if args.command == 'run_erc':
+        if args.errors_filter:
+            load_filters(cfg, args.errors_filter[0])
+        if cfg.ki7 and cfg.kicad_version < KICAD_VERSION_7_0_3:
+            # Bug introduced in 7.0.2. But I want to potentially cover 7.0.2.1
+            logger.debug("Adding filters to workaround KiCad 7.0.2 simulation models bug")
+            add_filter(cfg, 'simulation_model_issue', r"from symbol '#")
 
     memorize_project(cfg)
     # Create output dir if it doesn't exist
