@@ -51,7 +51,8 @@ test_server_nightly:
 test: lint
 	rm -rf output
 	$(PY_COV) erase
-	KIAUTO_INTERPOSER_DISABLE=1 KIAUS_USE_NIGHTLY=7.0 $(PYTEST) --test_dir output
+#	KIAUTO_INTERPOSER_DISABLE=1 KIAUS_USE_NIGHTLY=7.0 $(PYTEST) --test_dir output
+	$(PYTEST) --test_dir output
 	$(PY_COV) report
 	$(PY_COV) html
 	x-www-browser htmlcov/index.html
@@ -114,6 +115,9 @@ test_docker_local_k6_1:
 	$(PY_COV) html
 	rm .coverage
 
+t1k6: test_docker_local_k6_1
+
+
 test_docker_local_k7:
 	rm -rf output
 	$(PY_COV) erase
@@ -134,7 +138,7 @@ test_docker_local_k7_1:
 	$(PY_COV) html
 	rm .coverage
 
-t1k7: test_docker_local_k7_1
+#t1k7: test_docker_local_k7_1
 
 test_docker_local_k8_1:
 	rm -rf output
@@ -235,7 +239,7 @@ gen_ref:
 	# Restore the colors scheme
 	mv $(HOME)/.config/kicad/7.0/colors.ok $(HOME)/.config/kicad/7.0/colors
 
-t1k6: single_test
+t1k7: single_test
 
 single_test:
 	-@rm .coverage
