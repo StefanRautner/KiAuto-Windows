@@ -816,6 +816,9 @@ def apply_steps(steps, key, neg_key, id, cfg):
             if cfg.use_interposer:
                 if cfg.wait_after_move:
                     wait_kicad_ready_i(cfg, swaps=1)
+                    # Arbitrary, this is a problem with KiCad 5, so I won't spend too much time looking for a better solution
+                    sleep(1)
+                    wait_kicad_ready_i(cfg)
             else:
                 wait_3d_ready_n(cfg)
 
