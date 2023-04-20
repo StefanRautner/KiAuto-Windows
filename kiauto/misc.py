@@ -50,6 +50,8 @@ KICAD_VERSION_7_99 = 7099000
 KICAD_VERSION_7_0_3 = 7000003
 KICAD_SHARE = '/usr/share/kicad/'
 KICAD_NIGHTLY_SHARE = '/usr/share/kicad-nightly/'
+RULES_KEY = 'Ctrl+Shift+A'
+#RULES_KEY = 'Alt+I'
 
 
 @contextmanager

@@ -22,7 +22,7 @@ from subprocess import DEVNULL
 import psutil
 import json
 
-from kiauto.misc import (WRONG_ARGUMENTS, KICAD_VERSION_5_99, Config, READ_ONLY_PROBLEM)
+from kiauto.misc import WRONG_ARGUMENTS, KICAD_VERSION_5_99, Config, READ_ONLY_PROBLEM, RULES_KEY
 from kiauto import log
 logger = log.get_logger(__name__)
 time_out_scale = 1.0
@@ -225,8 +225,8 @@ def create_user_hotkeys(cfg):
         text_file.write('common.Control.show3DViewer\tAlt+3\n')
         text_file.write('eeschema.EditorControl.exportNetlist\tCtrl+Shift+N\n')
         text_file.write('eeschema.EditorControl.generateBOM\tCtrl+Shift+B\n')
-        text_file.write('eeschema.InspectionTool.runERC\tCtrl+Shift+I\n')
-        text_file.write('pcbnew.DRCTool.runDRC\tCtrl+Shift+I\n')
+        text_file.write('eeschema.InspectionTool.runERC\t{}\n'.format(RULES_KEY))
+        text_file.write('pcbnew.DRCTool.runDRC\t{}\n'.format(RULES_KEY))
         text_file.write('pcbnew.ZoneFiller.zoneFillAll\tB\n')
         text_file.write('pcbnew.EditorControl.generateD356File\tAlt+Shift+E\n')
         text_file.write('3DViewer.Control.rotateXclockwise\tAlt+X\n')

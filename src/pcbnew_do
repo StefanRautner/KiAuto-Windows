@@ -44,7 +44,7 @@ from kiauto.file_util import (load_filters, wait_for_file_created_by_process, ap
                               check_input_file, memorize_project, restore_project, get_log_files, create_kicad_config,
                               set_time_out_scale as set_time_out_scale_f)
 from kiauto.misc import (REC_W, REC_H, __version__, NO_PCB, PCBNEW_CFG_PRESENT, WAIT_START, WRONG_LAYER_NAME,
-                         WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT,
+                         WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT, RULES_KEY,
                          CORRUPTED_PCB, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CFG_PRESENT,
                          MISSING_TOOL, KICAD_VERSION_6_99)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, setup_interposer_filename,
@@ -463,7 +463,7 @@ def run_drc_5_1(cfg):
 def run_drc_6_0(cfg):
     logger.info('Open Inspect->DRC')
     wait_point(cfg)
-    xdotool(['key', 'ctrl+shift+i'])
+    xdotool(['key', RULES_KEY.lower()])
     # Wait dialog
     wait_for_window('DRC modal window', cfg.drc_dialog_name)
     # Run the DRC
@@ -549,7 +549,7 @@ def run_drc_5_1_i(cfg):
 
 
 def run_drc_6_0_i(cfg):
-    control_dlg, _ = open_dialog_i(cfg, cfg.drc_dialog_name, 'ctrl+shift+i', no_main=True)
+    control_dlg, _ = open_dialog_i(cfg, cfg.drc_dialog_name, RULES_KEY.lower(), no_main=True)
     # Run the DRC
     send_keys(cfg, 'Run DRC', 'Return')
     # Wait for the end of the DRC (at the end KiCad restores the Close button)
