@@ -493,7 +493,15 @@ def eeschema_run_erc_schematic_6_0_i(cfg):
     # Run the ERC
     send_keys(cfg, 'Run ERC', 'Return')
     # Wait for completion. The Close button is refreshed at the end
-    wait_queue(cfg, 'GTK:Button Label:C_lose')
+    res = wait_queue(cfg, ['GTK:Button Label:C_lose', 'GTK:Window Destroy:'+title])
+    if res.startswith('GTK:Window Destroy:'):
+        # Ugly hack for 7.99 should be removed
+        logger.error(title+' destroyed (before completion)')
+        dialog, _ = open_dialog_i(cfg, title, RULES_KEY.lower(), no_main=True)
+        time.sleep(3)
+        wait_kicad_ready_i(cfg)
+        send_keys(cfg, 'Run ERC', 'Return')
+        wait_queue(cfg, 'GTK:Button Label:C_lose')
     # Save the report
     reopen = False
     try:
