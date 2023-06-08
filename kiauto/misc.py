@@ -51,7 +51,7 @@ KICAD_VERSION_7_0_3 = 7000003
 KICAD_SHARE = '/usr/share/kicad/'
 KICAD_NIGHTLY_SHARE = '/usr/share/kicad-nightly/'
 RULES_KEY = 'Ctrl+Shift+A'
-#RULES_KEY = 'Alt+I'
+# RULES_KEY = 'Alt+I'
 
 
 @contextmanager
@@ -346,4 +346,4 @@ __license__ = 'Apache 2.0'
 __email__ = 'stropea@inti.gob.ar'
 __status__ = 'stable'
 __url__ = 'https://github.com/INTI-CMNB/KiAuto/'
-__version__ = '2.2.5'
+__version__ = '2.2.6'
