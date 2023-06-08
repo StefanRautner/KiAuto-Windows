@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.6] - UNRELEASED
+### Added
+- New 3d_view options:
+  - use_layer_colors: instead of realistic
+  - hide_board_body: transparent core
+  - show_comments: visible User.Comments (only when use_layer_colors enabled)
+  - show_eco: visible Eco*.User (only when use_layer_colors enabled)
+  - show_adhesive: visible *.Adhesive
+
 
 ## [2.2.5] - 2023-04-18
 ### Added

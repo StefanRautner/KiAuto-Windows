@@ -1190,7 +1190,12 @@ def create_pcbnew_config(cfg):
                                   "show_solderpaste": not cfg.hide_solderpaste,
                                   "show_zones": not cfg.hide_zones,
                                   "clip_silk_on_via_annulus": not cfg.dont_clip_silk_on_via_annulus,
-                                  "subtract_mask_from_silk": not cfg.dont_substrack_mask_from_silk}
+                                  "subtract_mask_from_silk": not cfg.dont_substrack_mask_from_silk,
+                                  "realistic": not cfg.use_layer_colors,
+                                  "show_board_body": not cfg.hide_board_body,
+                                  "show_comments": cfg.show_comments,
+                                  "show_eco": cfg.show_eco,
+                                  "show_adhesive": cfg.show_adhesive}
                 json_text = json.dumps(conf)
                 with open(cfg.conf_3dview, "wt") as viewer_file:
                     viewer_file.write(json_text)
@@ -1373,6 +1378,7 @@ if __name__ == '__main__':  # noqa: C901
                             action='store_true')
     v3d_parser.add_argument('--dont_substrack_mask_from_silk', help="Don't clip silkscreen at solder mask edges (KiCad 6)",
                             action='store_true')
+    v3d_parser.add_argument('--hide_board_body', help='Hide the body of the PCB board (KiCad 6)', action='store_true')
     v3d_parser.add_argument('--hide_silkscreen', help='Hide the silkscreen layers (KiCad 6)', action='store_true')
     v3d_parser.add_argument('--hide_soldermask', help='Hide the solder mask layers (KiCad 6)', action='store_true')
     v3d_parser.add_argument('--hide_solderpaste', help='Hide the solder paste layers (KiCad 6)', action='store_true')
@@ -1393,11 +1399,16 @@ if __name__ == '__main__':  # noqa: C901
     v3d_parser.add_argument('--orthographic', '-O', help='Enable the orthographic projection', action='store_true')
     v3d_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file (PNG)', default=['capture.png'])
     v3d_parser.add_argument('--ray_tracing', '-r', help='Enable the realistic render', action='store_true')
+    v3d_parser.add_argument('--show_adhesive', help='Show the adhesive layer', action='store_true')
+    v3d_parser.add_argument('--show_comments', help='Show the user comments layer', action='store_true')
+    v3d_parser.add_argument('--show_eco', help='Show the user eco layers', action='store_true')
     v3d_parser.add_argument('--silk_color', nargs=1,
                             help='Silk color (KiCad 6 supports color1,color2 for top/bottom)', default=['#E5E5E5'])
     v3d_parser.add_argument('--sm_color', nargs=1, help='Solder mask color (KiCad 6 supports color1,color2 for top/bottom)',
                             default=['#143324D4'])
     v3d_parser.add_argument('--sp_color', nargs=1, help='Solder paste color', default=['#808080'])
+    v3d_parser.add_argument('--use_layer_colors', help='Use the colors of the layers, not realistic colors (KiCad 6)',
+                            action='store_true')
     v3d_parser.add_argument('--use_rt_wait', '-u', help='Use the ray tracing end detection even on normal renders',
                             action='store_true')
     v3d_parser.add_argument('--view', '-v', nargs=1, help='Axis view, uppercase is reversed (i.e. Z is bottom)',
@@ -1566,6 +1577,11 @@ if __name__ == '__main__':  # noqa: C901
         cfg.hide_zones = args.hide_zones
         cfg.dont_substrack_mask_from_silk = args.dont_substrack_mask_from_silk
         cfg.dont_clip_silk_on_via_annulus = args.dont_clip_silk_on_via_annulus
+        cfg.use_layer_colors = args.use_layer_colors
+        cfg.hide_board_body = args.hide_board_body
+        cfg.show_comments = args.show_comments
+        cfg.show_eco = args.show_eco
+        cfg.show_adhesive = args.show_adhesive
     else:
         cfg.no_tht = False
         cfg.no_smd = False
