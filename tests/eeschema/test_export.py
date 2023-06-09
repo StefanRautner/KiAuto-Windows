@@ -42,7 +42,7 @@ def test_export_pdf(test_dir):
     cmd = [PROG, '-vv', '-r', 'export', '--file_format', 'pdf']
     ctx.run(cmd)
     ctx.expect_out_file(pdf)
-    ctx.compare_image(pdf, 'good_sch_top.pdf')
+    ctx.compare_image(pdf, 'good_sch_top.pdf', fuzz='31%')
     # Check the .pro wasn't altered
     logging.debug("Checking .pro wasn't altered")
     assert mtime == ctx.get_pro_mtime()

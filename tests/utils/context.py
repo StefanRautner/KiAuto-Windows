@@ -313,7 +313,7 @@ class TestContext(object):
         self.compare_image(image_png, reference_png, diff)
         os.remove(os.path.join(self.ref_dir, reference_png))
 
-    def compare_pdf(self, gen, reference=None, diff='diff-{}.png'):
+    def compare_pdf(self, gen, reference=None, diff='diff-{}.png', fuzz='30%'):
         """ For multi-page PDFs """
         if reference is None:
             reference = gen
@@ -339,7 +339,7 @@ class TestContext(object):
         for page in range(len(ref_pages)):
             self._compare_image(self.get_out_path('ref-'+str(page)+'.png'),
                                 self.get_out_path('gen-'+str(page)+'.png'),
-                                self.get_out_path(diff.format(page)))
+                                self.get_out_path(diff.format(page)), fuzz=fuzz)
 
     def compare_txt(self, text, reference=None, diff='diff.txt'):
         if reference is None:
