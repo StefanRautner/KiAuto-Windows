@@ -322,11 +322,15 @@ def eeschema_parse_erc(cfg):
             if cfg.kicad_version >= KICAD_VERSION_5_99 and i < len(lines):
                 # KiCad 6 moved the severity to the next line
                 line = lines[i+1]
-                # KiCad 7.0.2 bug: a message with two extra \n
-                # Error reading simulation model from symbol '#PWR03':\nFailed to read simulation model from fields.\n
-                if '; Severity' not in line and i+3 < len(lines) and lines[i+2] == '':
+                if '; Severity' not in line and i+3 < len(lines):
+                    if lines[i+2] == '':
+                        # KiCad 7.0.2 bug: a message with two extra \n
+                        # Error reading simulation model from symbol '#PWR03':\nFailed to read simulation model from fields.\n
+                        line = lines[i+3]
+                    else:
+                        # KiCad 7.0.5 bug: a message with one extra \n
+                        line = lines[i+2]
                     msg += ' '+line
-                    line = lines[i+3]
             # Discard messages explicitly excluded using the GUI
             excluded = '(excluded)' in line
             if r'Severity: error' in line:

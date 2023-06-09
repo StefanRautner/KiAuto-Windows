@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - show_eco: visible Eco*.User (only when use_layer_colors enabled)
   - show_adhesive: visible *.Adhesive
 
+### Fixed
+- Problems with KiCad 7.0.5 ERC formatting
+
 
 ## [2.2.5] - 2023-04-18
 ### Added
