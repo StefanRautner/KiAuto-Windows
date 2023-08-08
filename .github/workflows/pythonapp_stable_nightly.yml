@@ -1,18 +1,7 @@
 name: Regression tests (stable nightly)
 
 on:
-  push:
-    paths:
-     - '**.py'
-     - 'src/*_do'
-     - 'tests/**'
-     - '.github/workflows/pythonapp_stable_nightly.yml'
-  pull_request:
-    paths:
-     - '**.py'
-     - 'src/*_do'
-     - 'tests/**'
-     - '.github/workflows/pythonapp_stable_nightly.yml'
+  workflow_dispatch
 
 jobs:
   test_stable_nightly:
