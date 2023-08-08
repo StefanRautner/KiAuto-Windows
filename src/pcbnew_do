@@ -675,8 +675,9 @@ def export_gencad_i(cfg, keys):
     dialog, _ = open_dialog_i(cfg, 'Export to GenCAD settings', keys)
     # KiCad dialogs are unreliable, you never know which widget is selected
     # This goes to the top left corner of the dialog
-    # Note: lamentably this widget doesn't have a label
-    xdotool(['key', 'alt+f', 'Up'])
+    # Note 1: lamentably this widget doesn't have a label
+    # Note 2: KiCad 7.0.7 behavior changed, up goes to the button (when no WM)
+    xdotool(['key', 'alt+f', 'Up', 'Left'])
     # Paste the name
     paste_output_file_i(cfg)
     # Change the settings to what the user wants
