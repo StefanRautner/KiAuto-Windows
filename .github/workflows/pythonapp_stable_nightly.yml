@@ -18,7 +18,7 @@ jobs:
   test_stable_nightly:
 
     runs-on: ubuntu-latest
-    container: setsoft/kicad_auto_test:stable_nightly
+    container: ghcr.io/inti-cmnb/kicad_auto_test:stable_nightly
 
     steps:
     - uses: actions/checkout@v2
