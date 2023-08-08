@@ -306,7 +306,7 @@ def check_text_replace(cfg, name):
 def paste_text_i(cfg, msg, text):
     """ Paste some text and check the echo from KiCad, then wait for sleep """
     # Paste the name
-    cfg.logger.info(msg)
+    cfg.logger.info('{} ({})'.format(msg, text))
     wait_point(cfg)
     retry = True
     while retry:
