@@ -1,3 +1,9 @@
+kiauto (2.2.7-1) stable; urgency=medium
+
+  * KiCad 7.0.7 RC1 support
+
+ -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Tue, 08 Aug 2023 09:53:18 -0300
+
 kiauto (2.2.6-1) stable; urgency=medium
 
   * New 3d_view options (use_layer_colors, hide_board_body, show_comments,
