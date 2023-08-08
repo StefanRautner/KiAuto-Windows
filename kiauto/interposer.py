@@ -484,7 +484,16 @@ def dismiss_file_open_error(cfg, title):
     msgs = collect_dialog_messages(cfg, title)
     kind = 'PCB' if cfg.is_pcbnew else 'Schematic'
     fname = os.path.basename(cfg.input_file)
-    if 'Open Anyway' in msgs and kind+" '"+fname+"' is already open." in msgs:
+    # KiCad 6.x and <7.0.7: PCB 'xxxx' is already open.
+    # KiCad 7.0.7: PCB 'xxxx' is already open by 'user' at 'host'
+    start = kind+" '"+fname+"' is already open"
+    found = False
+    for msg in msgs:
+        if msg.startswith(start) and msg.endswith("."):
+            found = True
+            fname = msg
+            break
+    if 'Open Anyway' in msgs and found:
         cfg.logger.warning('This file is already opened ({})'.format(fname))
         dismiss_dialog(cfg, title, ['Left', 'Return'])
         return
