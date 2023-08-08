@@ -10,7 +10,7 @@ jobs:
     container: ghcr.io/inti-cmnb/kicad_auto_test:stable_nightly
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Test stable nightly
       run: |
         make test_server_ki7
