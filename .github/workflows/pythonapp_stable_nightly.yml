@@ -1,0 +1,51 @@
+name: Regression tests (stable nightly)
+
+on:
+  push:
+    paths:
+     - '**.py'
+     - 'src/*_do'
+     - 'tests/**'
+     - '.github/workflows/pythonapp_stable_nightly.yml'
+  pull_request:
+    paths:
+     - '**.py'
+     - 'src/*_do'
+     - 'tests/**'
+     - '.github/workflows/pythonapp_stable_nightly.yml'
+
+jobs:
+  test_stable_nightly:
+
+    runs-on: ubuntu-latest
+    container: setsoft/kicad_auto_test:stable_nightly
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Test stable nightly
+      run: |
+        make test_server_ki7
+    - name: Store results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v1
+      with:
+        name: Test_Output_stable_nightly
+        path: output
+    - name: Upload Coverage
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_FLAG_NAME: nightly
+        COVERALLS_PARALLEL: true
+      run: coveralls
+
+  coveralls:
+    name: Finish Coveralls
+    needs: test_nightly
+    runs-on: ubuntu-latest
+    steps:
+    - name: Finished
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      run: |
+        curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]="$GITHUB_RUN_ID"&payload[status]=done"
+
