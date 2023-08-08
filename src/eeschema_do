@@ -485,6 +485,8 @@ def eeschema_run_erc_schematic_6_0_n(cfg):
     logger.info('Exit ERC')
     wait_point(cfg)
     xdotool(['key', 'Escape'])
+    # KiCad 7.0.7 lack of ESC support
+    xdotool(['key', 'shift+Tab', 'shift+Tab', 'Return'])
 
 
 def eeschema_run_erc_schematic_6_0_i(cfg):
@@ -524,7 +526,9 @@ def eeschema_run_erc_schematic_6_0_i(cfg):
     # Wait until created
     wait_create_i(cfg, 'ERC', forced_ext='rpt')
     # Close the ERC dialog
-    send_keys(cfg, 'Exit ERC', 'Escape', closes=dialog, no_destroy=cfg.ki8)
+    # KiCad 7.0.7 no longer closes this dialog with ESC
+    # send_keys(cfg, 'Exit ERC', 'Escape', closes=dialog, no_destroy=cfg.ki8)
+    send_keys(cfg, 'Exit ERC', 'alt+l', closes=dialog, no_destroy=cfg.ki8)
 
 
 def eeschema_run_erc_schematic(cfg):
