@@ -17,6 +17,7 @@ import time
 from kiauto.misc import KICAD_DIED, CORRUPTED_PCB, PCBNEW_ERROR, EESCHEMA_ERROR
 from kiauto import log
 from kiauto.ui_automation import xdotool, wait_for_window, wait_point, text_replace
+from kiauto.file_util import wait_for_file_created_by_process
 
 KICAD_EXIT_MSG = '>>exit<<'
 INTERPOSER_OPS = 'interposer_options.txt'
@@ -377,6 +378,13 @@ def wait_create_i(cfg, name, fn=None, forced_ext=None):
     if fn is None:
         fn = cfg.output_file
     fn_kicad = fn+'.'+forced_ext if forced_ext and cfg.ki8 else fn
+    # Experimental option to use the PID approach
+    # Could help for VirtioFS where the close seems to be somehow bypassed
+    use_pid = os.environ.get('KIAUTO_USE_PID_FOR_CREATE')
+    if use_pid is not None and use_pid != '0':
+        pid = cfg.pcbnew_pid if hasattr(cfg, 'pcbnew_pid') else cfg.eeschema_pid
+        return wait_for_file_created_by_process(pid, fn_kicad)
+    # Normal mechanism using the interposer
     open_msg = 'IO:open:'+fn_kicad
     close_msg = 'IO:close:'+fn_kicad
     if cfg.collecting_io:
