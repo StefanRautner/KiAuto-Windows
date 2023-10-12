@@ -46,7 +46,7 @@ from kiauto.file_util import (load_filters, wait_for_file_created_by_process, ap
 from kiauto.misc import (REC_W, REC_H, __version__, NO_PCB, PCBNEW_CFG_PRESENT, WAIT_START, WRONG_LAYER_NAME,
                          WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT, RULES_KEY,
                          CORRUPTED_PCB, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CFG_PRESENT,
-                         MISSING_TOOL, KICAD_VERSION_6_99)
+                         MISSING_TOOL, KICAD_VERSION_6_99, KICAD_VERSION_7_0_8)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, setup_interposer_filename,
                                create_interposer_print_options_file, wait_queue, wait_start_by_msg, wait_and_show_progress,
                                set_kicad_process, open_dialog_i, wait_kicad_ready_i, paste_bogus_filename, paste_text_i,
@@ -379,6 +379,9 @@ def print_layers_n(cfg, id_pcbnew, print_dialog_keys):
     keys = ['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Return']
     if not cfg.ki7:
         keys.insert(1, 'shift+Tab')
+    elif cfg.kicad_version >= KICAD_VERSION_7_0_8:
+        # We get the close button instead of Print
+        keys.insert(-1, 'Right')
     xdotool(keys)
     # Check it is open
     id2 = wait_for_window('Printer dialog', '^(Print|%s)$' % cfg.print_dlg_name, skip_id=id_print_dialog)
