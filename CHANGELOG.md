@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] -
 ### Added
+- Support for KiCad 7.0.8
+  - New options widgets in the ERC dialog (skipped when no interposer)
+  - New behavior when schematic already opened
 - Experimental option to enable the file creation by PID when using the
   interposer. Use KIAUTO_USE_PID_FOR_CREATE=1 environment variable
 

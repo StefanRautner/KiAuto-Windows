@@ -46,7 +46,7 @@ from kiauto.file_util import (load_filters, wait_for_file_created_by_process, ap
 from kiauto.misc import (REC_W, REC_H, __version__, NO_SCHEMATIC, EESCHEMA_CFG_PRESENT, KICAD_CFG_PRESENT, RULES_KEY,
                          WAIT_START, WRONG_SCH_NAME, EESCHEMA_ERROR, Config, KICAD_VERSION_5_99, WONT_OVERWRITE,
                          USER_HOTKEYS_PRESENT, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CLI_ERROR,
-                         KICAD_VERSION_7_0_3)
+                         KICAD_VERSION_7_0_3, KICAD_VERSION_7_0_8)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, wait_start_by_msg,
                                set_kicad_process, open_dialog_i, wait_kicad_ready_i,
                                paste_output_file_i, exit_kicad_i, paste_text_i, wait_queue,
@@ -59,6 +59,8 @@ TITLE_CONFIRMATION = '^Confirmation$'
 TITLE_REMAP_SYMBOLS = '^Remap Symbols$'
 TITLE_ERROR = '^(KiCad Schematic Editor )?Error$'
 TITLE_WARNING = '^Warning$'
+# KiCad 7.0.8 for already open (not reliable)
+TITLE_FILE_OPEN_WARNING = '^File Open Warning$'
 KI6_LOADING = r'^\[no schematic loaded\] '
 
 
@@ -140,6 +142,15 @@ def dismiss_already_running():
     time.sleep(5)
 
 
+def dismiss_already_opened():
+    nf_title = TITLE_FILE_OPEN_WARNING
+    wait_for_window(nf_title, nf_title, 1)
+    logger.info('Dismiss file already opened')
+    xdotool(['search', '--onlyvisible', '--name', nf_title, 'windowfocus'])
+    logger.debug('Found, sending Return')
+    xdotool(['key', 'Left', 'Return'])
+
+
 def wait_eeschema(cfg, time, others=None):
     return wait_for_window('Main eeschema window', cfg.ee_window_title, time, others=others, popen_obj=cfg.popen_obj)
 
@@ -153,7 +164,7 @@ def wait_eeschema_start(cfg):
         other = None
         try:
             wait_eeschema(cfg, wait_start, others=[TITLE_CONFIRMATION, TITLE_REMAP_SYMBOLS, TITLE_ERROR, TITLE_WARNING,
-                          KI6_LOADING])
+                          TITLE_FILE_OPEN_WARNING, KI6_LOADING])
         except RuntimeError:  # pragma: no cover
             logger.debug('Time-out waiting for eeschema, will retry')
             failed_focuse = True
@@ -176,6 +187,8 @@ def wait_eeschema_start(cfg):
                 return False
         elif other == TITLE_CONFIRMATION:
             dismiss_already_running()
+        elif other == TITLE_FILE_OPEN_WARNING:
+            dismiss_already_opened()
         elif other == TITLE_WARNING:
             dismiss_warning()
             # This is crazy, if we miss a lib we get an "Error", pressing ESC solves it
@@ -445,6 +458,9 @@ def eeschema_run_erc_schematic_6_0_n(cfg):
     logger.info('Open the save dialog')
     wait_point(cfg)
     keys_save = ['key', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Return']
+    if cfg.kicad_version >= KICAD_VERSION_7_0_8:
+        keys_save.extend(['Tab', 'Tab'])
+    keys_save.append('Return')
     xdotool(keys_save)
     # Wait for the save dialog
     try_again = False
