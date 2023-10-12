@@ -457,7 +457,7 @@ def eeschema_run_erc_schematic_6_0_n(cfg):
     # Save the report
     logger.info('Open the save dialog')
     wait_point(cfg)
-    keys_save = ['key', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Return']
+    keys_save = ['key', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Tab']
     if cfg.kicad_version >= KICAD_VERSION_7_0_8:
         keys_save.extend(['Tab', 'Tab'])
     keys_save.append('Return')
