@@ -115,8 +115,20 @@ test_docker_local_k6_1:
 	$(PY_COV) html
 	rm .coverage
 
+test_docker_local_k6_1_ni:
+	rm -rf output
+	$(PY_COV) erase
+	# Run in the same directory to make the __pycache__ valid
+	# Also change the owner of the files to the current user (we run as root like in GitHub)
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki6 \
+		/bin/bash -c "export KIAUTO_INTERPOSER_DISABLE=1; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad6/ .coverage"
+	$(PY_COV) report
+	$(PY_COV) html
+	rm .coverage
+
 t1k6: test_docker_local_k6_1
 
+t1k6ni: test_docker_local_k6_1_ni
 
 test_docker_local_k7:
 	rm -rf output
