@@ -304,7 +304,9 @@ def eeschema_plot_schematic_n(cfg, open_keys):
     # We try to select the "Plot xxx" button.
     command_list = ['key', 'shift+Tab', 'shift+Tab']
     if cfg.all_pages:
-        command_list.append('shift+Tab')
+        command_list.extend(['Right']*3)  # Force the one at the right (1 to 3 positions)
+    else:
+        command_list.extend(['Left']*3)  # Force the one at the left (0 to 3 positions)
     logger.debug(str(command_list)+'   '+str(len(command_list)))
     xdotool(command_list)
     logger.info('Plot')
