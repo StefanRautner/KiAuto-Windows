@@ -371,17 +371,13 @@ def print_layers_n(cfg, id_pcbnew, print_dialog_keys):
     id_print_dialog = open_print_dialog(cfg, print_dialog_keys, id_pcbnew)
     # Open the gtk print dialog
     wait_point(cfg)
-    # Two possible options here:
+    # KiCad 5: Two possible options here:
     # 1) With WM we usually get "Exclude PCB edge ..." selected
     # 2) Without WM we usually get "Color" selected
     # In both cases sending 4 Shit+Tab moves us to one of the layer columns.
     # From there Return prints and Escape closes the window.
-    keys = ['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Return']
-    if not cfg.ki7:
-        keys.insert(1, 'shift+Tab')
-    elif cfg.kicad_version >= KICAD_VERSION_7_0_8:
-        # We get the close button instead of Print
-        keys.insert(-1, 'Right')
+    # KiCad 6/7 on Debian 12: we get a button, going right selects the Print button
+    keys = ['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Right', 'Right', 'Return']
     xdotool(keys)
     # Check it is open
     id2 = wait_for_window('Printer dialog', '^(Print|%s)$' % cfg.print_dlg_name, skip_id=id_print_dialog)
