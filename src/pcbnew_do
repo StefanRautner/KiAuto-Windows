@@ -479,7 +479,8 @@ def run_drc_6_0(cfg):
     wait_point(cfg)
     logger.info('Save DRC')
     wait_point(cfg)
-    xdotool(['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'Return'])
+    xdotool(['key', 'shift+Tab', 'shift+Tab', 'shift+Tab', 'shift+Tab',
+             'Right', 'Right', 'Right', 'Right', 'Up', 'Return'])
     # Wait for the save dialog
     wait_for_window('DRC File save dialog', 'Save Report to File')
     # Paste the name
