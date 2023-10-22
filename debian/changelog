@@ -1,3 +1,9 @@
+kiauto (2.2.8-1) stable; urgency=medium
+
+  * KiCad 7.0.8 support (even when no interposer is available)
+
+ -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Sun, 22 Oct 2023 17:54:38 -0300
+
 kiauto (2.2.7-1) stable; urgency=medium
 
   * KiCad 7.0.7 RC1 support
