@@ -33,15 +33,18 @@ ASYNC_DIALOGS = INFO_DIALOGS | WARN_DIALOGS
 
 def check_interposer(args, logger, cfg):
     # Name of the interposer library
-    interposer_lib = os.path.abspath(os.path.join(os.path.dirname(__file__), 'interposer', 'libinterposer.so'))
+    machine = platform.machine().lower()
+    extra_name = '' if machine == 'x86_64' else '_'+machine
+    interposer_lib = os.path.abspath(os.path.join(os.path.dirname(__file__), 'interposer', f'libinterposer{extra_name}.so'))
+    logger.debug(f'Looking for interposer lib: {interposer_lib}')
     if (not os.path.isfile(interposer_lib) or  # The lib isn't there
        args.disable_interposer or              # The user disabled it
        os.environ.get('KIAUTO_INTERPOSER_DISABLE') or  # The user disabled it using the environment
-       platform.system() != 'Linux' or 'x86_64' not in platform.platform()):  # Not Linux 64 bits x86
+       platform.system() != 'Linux'):  # Not Linux
         interposer_lib = None
     else:
         os.environ['LD_PRELOAD'] = interposer_lib
-        logger.debug('** Using interposer: '+interposer_lib)
+        logger.debug('** Interposer lib found')
     cfg.use_interposer = interposer_lib
     cfg.enable_interposer = interposer_lib or args.interposer_sniff
     cfg.logger = logger

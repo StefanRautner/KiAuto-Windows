@@ -68,6 +68,7 @@ def hide_stderr():
 
 class Config(object):
     def __init__(self, logger, input_file=None, args=None, is_pcbnew=False):
+        logger.debug(f'KiAuto v{__version__}')
         self.export_format = 'pdf'
         self.is_pcbnew = is_pcbnew
         if input_file:
