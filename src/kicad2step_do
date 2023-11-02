@@ -137,7 +137,6 @@ if __name__ == '__main__':
     if args.user_origin:
         cmd.append('--user-origin='+args.user_origin[0])
     if args.no_virtual:
-        logger.error(cfg.ki8)
         if cfg.ki8:
             cmd.append('--no-unspecified')
         else:
