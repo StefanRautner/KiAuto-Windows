@@ -440,6 +440,37 @@ int fclose(FILE *stream)
 }
 
 
+int fclose64(FILE *stream)
+{
+ static int(*next_func)(FILE *)=NULL;
+ int res;
+ char path[1024];
+ char result[1024];
+ int fd;
+
+ if (next_func==NULL)
+   { /* Initialization */
+    char *msg;
+    printf("* wrapping fclose64\n");
+    next_func=dlsym(RTLD_NEXT,"fclose64");
+    if ((msg=dlerror())!=NULL)
+       printf("* dlopen failed : %s\n", msg);
+    printf("* next_func : %p\n", next_func);
+   }
+
+ fd=fileno(stream);
+ /* Read out the link to our file descriptor. */
+ sprintf(path, "/proc/self/fd/%d", fd);
+ memset(result, 0, 1024);
+ readlink(path, result, 1023);
+
+ res=next_func(stream);
+ printf("IO:close:%s\n",result);
+ fflush(stdout);
+ return res;
+}
+
+
 void gtk_main(void)
 {
  static void (*next_func)(void)=NULL;
@@ -569,6 +600,46 @@ int close(int fd)
     const char *fn;
     printf("* wrapping close\n");
     next_func=dlsym(RTLD_NEXT,"close");
+    if ((msg=dlerror())!=NULL)
+       printf("* dlopen failed : %s\n", msg);
+    fn=getenv("KIAUTO_INTERPOSER_LOWLEVEL_IO");
+    if ((fn==NULL || !fn[0]) && !FORCE_LOW_LEVEL_LOG)
+       printf("* Not logging low level I/O\n");
+    else
+       do_log=1;
+   }
+
+ if (do_log)
+   {/* Read out the link to our file descriptor. */
+    sprintf(path, "/proc/self/fd/%d", fd);
+    memset(result, 0, 1024);
+    readlink(path, result, 1023);
+   }
+
+ res=next_func(fd);
+ if (do_log)
+   {
+    printf("IO:close:%s\n",result);
+    fflush(stdout);
+   }
+ return res;
+}
+
+
+int close64(int fd)
+{
+ static int(*next_func)(int)=NULL;
+ static int do_log=FORCE_LOW_LEVEL_LOG;
+ int res;
+ char path[1024];
+ char result[1024];
+
+ if (next_func==NULL)
+   { /* Initialization */
+    char *msg;
+    const char *fn;
+    printf("* wrapping close64\n");
+    next_func=dlsym(RTLD_NEXT,"close64");
     if ((msg=dlerror())!=NULL)
        printf("* dlopen failed : %s\n", msg);
     fn=getenv("KIAUTO_INTERPOSER_LOWLEVEL_IO");
