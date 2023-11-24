@@ -16,7 +16,7 @@ This program runs eeschema and can:
 2) Generate the netlist
 3) Generate the BoM in XML format
 4) Run the ERC
-The process is graphical and very delicated.
+The process is graphical and very delicated
 """
 
 import argparse
