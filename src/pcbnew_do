@@ -46,7 +46,7 @@ from kiauto.file_util import (load_filters, wait_for_file_created_by_process, ap
 from kiauto.misc import (REC_W, REC_H, __version__, NO_PCB, PCBNEW_CFG_PRESENT, WAIT_START, WRONG_LAYER_NAME,
                          WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT, RULES_KEY,
                          CORRUPTED_PCB, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CFG_PRESENT,
-                         MISSING_TOOL, KICAD_VERSION_6_99, KICAD_VERSION_7_0_8)
+                         MISSING_TOOL, KICAD_VERSION_6_99)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, setup_interposer_filename,
                                create_interposer_print_options_file, wait_queue, wait_start_by_msg, wait_and_show_progress,
                                set_kicad_process, open_dialog_i, wait_kicad_ready_i, paste_bogus_filename, paste_text_i,
@@ -139,7 +139,7 @@ def parse_drc_ki6(lines):
             assert violation['severity'] in ["error (excluded)", "error", "warning (excluded)", "warning"]
             violations.append(violation)
             context = []
-            while(offset+len(context) < len(lines)):
+            while offset+len(context) < len(lines):
                 ln = lines[offset+2+len(context)]
                 if not ln.startswith("    "):
                     break

@@ -278,7 +278,8 @@ class TestContext(object):
         """ For images and single page PDFs """
         if reference is None:
             reference = image
-        self._compare_image(self.get_out_path(image), os.path.join(self.ref_dir, reference), self.get_out_path(diff), fuzz, tol=tol)
+        self._compare_image(self.get_out_path(image), os.path.join(self.ref_dir, reference), self.get_out_path(diff), fuzz,
+                            tol=tol)
 
     def svg_to_png(self, svg):
         png = os.path.splitext(svg)[0]+'.png'

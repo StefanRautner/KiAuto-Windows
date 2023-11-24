@@ -194,7 +194,7 @@ def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kic
             cfg.logger.debug('Interposer match, times='+str(times))
         if (not with_windows and not kicad_can_exit and line.startswith('GTK:Window Title:') and
             # The change in the unsaved status is ignored here
-           not(not cfg.ki5 and line.endswith(cfg.window_title_end))):
+           not (not cfg.ki5 and line.endswith(cfg.window_title_end))):
             # We aren't expecting a window, but something seems to be there
             # Note that window title change is normal when we expect KiCad exiting
             title = line[17:]
