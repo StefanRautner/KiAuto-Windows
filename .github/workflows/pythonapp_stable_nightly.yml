@@ -10,13 +10,13 @@ jobs:
     container: ghcr.io/inti-cmnb/kicad_auto_test:stable_nightly
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test stable nightly
       run: |
         make test_server_ki7
     - name: Store results
       if: ${{ always() }}
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: Test_Output_stable_nightly
         path: output
@@ -37,4 +37,3 @@ jobs:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       run: |
         curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]="$GITHUB_RUN_ID"&payload[status]=done"
-
