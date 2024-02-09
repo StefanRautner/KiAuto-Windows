@@ -34,6 +34,8 @@ kicad_version = major*1000000+minor*1000+patch
 logging.debug('Detected KiCad v{}.{}.{} ({})'.format(major, minor, patch, kicad_version))
 ki5 = kicad_version < 5099000
 ki6 = not ki5
+ki7 = kicad_version >= 6099000
+ki8 = kicad_version >= 7099000
 
 
 def usable_cmd(cmd):

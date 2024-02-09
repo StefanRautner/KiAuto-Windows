@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020 Salvador E. Tropea
-# Copyright (c) 2020 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2020-2024 Salvador E. Tropea
+# Copyright (c) 2020-2024 Instituto Nacional de Tecnologïa Industrial
 # License: Apache 2.0
 # Project: KiAuto (formerly kicad-automation-scripts)
 """
@@ -43,7 +43,9 @@ def test_erc_ok_1(test_dir):
     cmd = [PROG, '-vv', '--record', 'run_erc']
     ctx.run(cmd)
     ctx.expect_out_file(erc)
-    ctx.expect_out_file('run_erc_eeschema_screencast.ogv')
+    if context.ki5 or context.ki6 or context.ki7:
+        # KiCad 8 uses CLI
+        ctx.expect_out_file('run_erc_eeschema_screencast.ogv')
     ctx.clean_up()
 
 
@@ -87,6 +89,7 @@ def test_erc_warning_fail(test_dir):
     ctx.clean_up()
 
 
+@pytest.mark.skipif(context.ki8, reason="Running from CLI")
 def test_erc_ok_eeschema_running(test_dir):
     """ 1) Test eeschema already running
         2) Test logger colors on TTYs """

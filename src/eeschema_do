@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2023 Salvador E. Tropea
-# Copyright (c) 2020-2023 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2020-2024 Salvador E. Tropea
+# Copyright (c) 2020-2024 Instituto Nacional de Tecnologïa Industrial
 # Copyright (c) 2019 Jesse Vincent (@obra)
 # Copyright (c) 2018-2019 Seppe Stas (@seppestas) (Productize SPRL)
 # Based on ideas by: Scott Bezek (@scottbez1)
@@ -386,6 +386,65 @@ def eeschema_parse_erc(cfg):
     return errors, warnings
 
 
+def eeschema_parse_erc_8(cfg):
+    with open(cfg.output_file, 'rt') as f:
+        lines = f.read().splitlines()
+        last_line = lines[-1]
+    cont = False
+    is_err = False
+    err_regex = re.compile(r'^\[(\S+)\]: (.*)')
+    errors_excl = warnings_excl = 0
+    excluded = False
+    get_error = False
+    for i, line in enumerate(lines):
+        m = err_regex.search(line)
+        if m:
+            msg = '({}) {}'.format(m.group(1), m.group(2))
+            get_error = True
+            continue
+        if get_error:
+            assert line.startswith('    ;')
+            get_error = False
+            # Discard messages explicitly excluded using the GUI
+            excluded = '(excluded)' in line
+            if r'error' in line:
+                is_err = True
+                if excluded:
+                    errors_excl += 1
+                else:
+                    cfg.errs.append(msg)
+            else:
+                is_err = False
+                if excluded:
+                    warnings_excl += 1
+                else:
+                    cfg.wrns.append(msg)
+            cont = True
+            continue
+        if cont and line.startswith('    '):
+            if excluded:
+                continue
+            if is_err:
+                if len(cfg.errs):
+                    cfg.errs.append(cfg.errs.pop()+'\n'+line)
+            else:
+                if len(cfg.wrns):
+                    cfg.wrns.append(cfg.wrns.pop()+'\n'+line)
+            continue
+        cont = False
+    logger.debug('Last line: '+last_line)
+    m = re.search(r'^ \*\* ERC messages: ([0-9]+) +Errors ([0-9]+) +Warnings ([0-9]+)+$', last_line)
+    # messages = m.group(1)
+    errors = int(m.group(2))-errors_excl
+    warnings = int(m.group(3))-warnings_excl
+    # Apply the warnings_as_errors option
+    if cfg.warnings_as_errors:
+        cfg.errs += cfg.wrns
+        cfg.wrns = []
+        return errors+warnings, 0
+    return errors, warnings
+
+
 def eeschema_run_erc_schematic_5_1_n(cfg):
     # Open the ERC dialog
     logger.info('Open Tools->Electrical Rules Checker')
@@ -557,6 +616,29 @@ def eeschema_run_erc_schematic(cfg):
             eeschema_run_erc_schematic_6_0_i(cfg)
         else:
             eeschema_run_erc_schematic_6_0_n(cfg)
+
+
+def eeschema_run_erc_schematic_cli(cfg):
+    cmd = [cfg.kicad_cli, 'sch', 'erc', '-o', cfg.output_file, '--format', 'report', cfg.input_file]
+    run_command(cmd)
+    error_level = 0
+    # Run ERC
+    # Using old parser until --severity* and/or JSON output are fixed
+    # See https://gitlab.com/kicad/code/kicad/-/issues/16924
+    errors, warnings = eeschema_parse_erc_8(cfg)
+    skip_err, skip_wrn = apply_filters(cfg, 'ERC error/s', 'ERC warning/s')
+    errors = errors-skip_err
+    warnings = warnings-skip_wrn
+    if warnings > 0:
+        logger.warning(str(warnings)+' ERC warnings detected')
+        list_warnings(cfg)
+    if errors > 0:
+        logger.error(str(errors)+' ERC errors detected')
+        list_errors(cfg)
+        error_level = -errors
+    else:
+        logger.info('No errors')
+    return error_level
 
 
 def eeschema_netlist_commands_cli(cfg):
@@ -780,6 +862,12 @@ def can_be_done_using_cli(command, cfg):
         return False
     if command in {'netlist', 'bom_xml'}:
         return True
+    if cfg.ki8 and command=='export':
+        # TODO: KiCad 8 supports specifying the pages
+        # Once added KiCad 8 should return True for all
+        return cfg.all_pages
+    if cfg.ki8 and command=='run_erc':
+        return True
     # Export can be partially done using the CLI
     if command == 'export':
         if cfg.export_format in {'svg', 'pdf'} and cfg.all_pages:
@@ -942,6 +1030,8 @@ if __name__ == '__main__':
             eeschema_netlist_commands_cli(cfg)
         elif args.command == 'bom_xml':
             eeschema_bom_xml_commands_cli(cfg)
+        elif args.command == 'run_erc':
+            error_level = eeschema_run_erc_schematic_cli(cfg)
         else:  # export
             eeschema_plot_schematic_cli(cfg)
         do_retry = False
