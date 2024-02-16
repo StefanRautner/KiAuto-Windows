@@ -205,6 +205,8 @@ def wait_queue(cfg, strs='', starts=False, times=1, timeout=300, do_to=True, kic
                 # KiCad 5 error during post-load, before releasing the CPU
                 # KiCad 7 missing fonts
                 dismiss_pcbnew_warning(cfg, title)
+            elif cfg.ki8 and title == 'KiCad PCB Editor Error':
+                dismiss_pcbnew_error(cfg, title)
             elif title.startswith(KIKIT_HIDE):
                 # Buggy KiKit plugin creating a dialog at start-up (many times)
                 pass
@@ -482,6 +484,12 @@ def dismiss_error(cfg, title):
         # KiCad 6 loading a sheet, but sub-sheets are missing
         cfg.logger.error('Error loading schematic file. Missing schematic files?')
         exit(EESCHEMA_ERROR)
+    if ("Failed to inspect the lock file '/tmp/org.kicad.kicad/instances/pcbnew-8.0' (error 2: No such file or directory)"
+       in msgs):
+        # KiCad 8.0.0RC2 glitch
+        cfg.logger.warning('KiCad 8 lock glitch')
+        dismiss_dialog(cfg, title, 'Return')
+        return
     for msg in msgs:
         if msg.startswith("Error loading schematic '"+cfg.input_file+"'."):
             # KiCad 7 schematic loading error
@@ -545,6 +553,18 @@ def dismiss_pcbnew_warning(cfg, title):
         # Warning about pad using an invalid layer
         # Missing font
         if msg.endswith("could not find valid layer for pad") or re.search(r"Font '(.*)' not found; substituting '(.*)'", msg):
+            cfg.logger.warning(msg)
+            dismiss_dialog(cfg, title, 'Return')
+            return
+    unknown_dialog(cfg, title, msgs)
+
+
+def dismiss_pcbnew_error(cfg, title):
+    """ lock glitch in 8.0.0RC2 """
+    msgs = collect_dialog_messages(cfg, title)
+    # More generic cases
+    for msg in msgs:
+        if msg.startswith("Failed to inspect the lock file"):
             cfg.logger.warning(msg)
             dismiss_dialog(cfg, title, 'Return')
             return
