@@ -24,7 +24,6 @@ import atexit
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -42,10 +41,10 @@ logger = None
 from kiauto.file_util import (load_filters, wait_for_file_created_by_process, apply_filters, list_errors, list_warnings,
                               check_kicad_config_dir, restore_config, backup_config, check_lib_table, create_user_hotkeys,
                               check_input_file, memorize_project, restore_project, get_log_files, create_kicad_config,
-                              set_time_out_scale as set_time_out_scale_f, add_filter)
+                              set_time_out_scale as set_time_out_scale_f, add_filter, run_command)
 from kiauto.misc import (REC_W, REC_H, __version__, NO_SCHEMATIC, EESCHEMA_CFG_PRESENT, KICAD_CFG_PRESENT, RULES_KEY,
                          WAIT_START, WRONG_SCH_NAME, EESCHEMA_ERROR, Config, KICAD_VERSION_5_99, WONT_OVERWRITE,
-                         USER_HOTKEYS_PRESENT, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CLI_ERROR,
+                         USER_HOTKEYS_PRESENT, __copyright__, __license__, TIME_OUT_MULT, get_en_locale,
                          KICAD_VERSION_7_0_3, KICAD_VERSION_7_0_8)
 from kiauto.interposer import (check_interposer, dump_interposer_dialog, start_queue, wait_start_by_msg,
                                set_kicad_process, open_dialog_i, wait_kicad_ready_i,
@@ -62,23 +61,6 @@ TITLE_WARNING = '^Warning$'
 # KiCad 7.0.8 for already open (not reliable)
 TITLE_FILE_OPEN_WARNING = '^File Open Warning$'
 KI6_LOADING = r'^\[no schematic loaded\] '
-
-
-def debug_output(res):
-    if res.stdout:
-        logger.debug('- Output from command: '+res.stdout.decode())
-
-
-def run_command(command, check=True):
-    logger.debug('Executing: '+shlex.join(command))
-    try:
-        res = subprocess.run(command, check=check, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        logger.error('Running {} returned {}'.format(e.cmd, e.returncode))
-        debug_output(e)
-        exit(KICAD_CLI_ERROR)
-    debug_output(res)
-    return res.stdout.decode().rstrip()
 
 
 def dismiss_library_error():
@@ -386,65 +368,6 @@ def eeschema_parse_erc(cfg):
     return errors, warnings
 
 
-def eeschema_parse_erc_8(cfg):
-    with open(cfg.output_file, 'rt') as f:
-        lines = f.read().splitlines()
-        last_line = lines[-1]
-    cont = False
-    is_err = False
-    err_regex = re.compile(r'^\[(\S+)\]: (.*)')
-    errors_excl = warnings_excl = 0
-    excluded = False
-    get_error = False
-    for i, line in enumerate(lines):
-        m = err_regex.search(line)
-        if m:
-            msg = '({}) {}'.format(m.group(1), m.group(2))
-            get_error = True
-            continue
-        if get_error:
-            assert line.startswith('    ;')
-            get_error = False
-            # Discard messages explicitly excluded using the GUI
-            excluded = '(excluded)' in line
-            if r'error' in line:
-                is_err = True
-                if excluded:
-                    errors_excl += 1
-                else:
-                    cfg.errs.append(msg)
-            else:
-                is_err = False
-                if excluded:
-                    warnings_excl += 1
-                else:
-                    cfg.wrns.append(msg)
-            cont = True
-            continue
-        if cont and line.startswith('    '):
-            if excluded:
-                continue
-            if is_err:
-                if len(cfg.errs):
-                    cfg.errs.append(cfg.errs.pop()+'\n'+line)
-            else:
-                if len(cfg.wrns):
-                    cfg.wrns.append(cfg.wrns.pop()+'\n'+line)
-            continue
-        cont = False
-    logger.debug('Last line: '+last_line)
-    m = re.search(r'^ \*\* ERC messages: ([0-9]+) +Errors ([0-9]+) +Warnings ([0-9]+)+$', last_line)
-    # messages = m.group(1)
-    errors = int(m.group(2))-errors_excl
-    warnings = int(m.group(3))-warnings_excl
-    # Apply the warnings_as_errors option
-    if cfg.warnings_as_errors:
-        cfg.errs += cfg.wrns
-        cfg.wrns = []
-        return errors+warnings, 0
-    return errors, warnings
-
-
 def eeschema_run_erc_schematic_5_1_n(cfg):
     # Open the ERC dialog
     logger.info('Open Tools->Electrical Rules Checker')
@@ -618,14 +541,69 @@ def eeschema_run_erc_schematic(cfg):
             eeschema_run_erc_schematic_6_0_n(cfg)
 
 
+def parse_erc_json(cfg):
+    with open(cfg.output_file, 'rt') as f:
+        js_txt = f.read()
+    if log.get_level() > 2:
+        logger.debug(js_txt)
+    data = json.loads(js_txt)
+    if data['$schema'] != 'https://schemas.kicad.org/erc.v1.json':
+        logger.warning('Unknown JSON schema, ERC might fail')
+    units = data['coordinate_units']
+    # Reconstruct the report
+    nm = ne = nw = 0
+    rpt = f"ERC report ({data['date']}, Encoding UTF8)\n\n"
+    for s in data['sheets']:
+        rpt += f"***** Sheet {s['path']}\n"
+        for v in s['violations']:
+            type = v['type']
+            description = v['description']
+            txt = f'({type}) {description}\n'
+            rpt += f'[{type}]: {description}\n'
+            severity = v['severity']
+            excluded = ' (excluded)' if v.get('excluded') else ''
+            sev = f'    ; {severity}{excluded}\n'
+            rpt += sev
+            txt += sev
+            for ln in v['items']:
+                x = ln['pos']['x']
+                y = ln['pos']['y']
+                desc = ln['description']
+                d = f'    @({x} {units}, {y} {units}): {desc}\n'
+                rpt += d
+                txt += d
+            if not excluded:
+                nm += 1
+                if severity == 'error':
+                    cfg.errs.append(txt)
+                    ne += 1
+                else:
+                    cfg.wrns.append(txt)
+                    nw += 1
+        rpt += '\n'
+    rpt += f" ** ERC messages: {nm}  Errors {ne}  Warnings {nw}\n"
+    # Save the output in report format
+    with open(cfg.output_file, 'wt') as f:
+        f.write(rpt)
+    # Compute the results
+    errors = len(cfg.errs)
+    warnings = len(cfg.wrns)
+    # Apply the warnings_as_errors option
+    if cfg.warnings_as_errors:
+        cfg.errs += cfg.wrns
+        cfg.wrns = []
+        return errors+warnings, 0
+    return errors, warnings
+
+
 def eeschema_run_erc_schematic_cli(cfg):
-    cmd = [cfg.kicad_cli, 'sch', 'erc', '-o', cfg.output_file, '--format', 'report', cfg.input_file]
+    cmd = [cfg.kicad_cli, 'sch', 'erc', '-o', cfg.output_file, '--format', 'json', '--severity-all', cfg.input_file]
     run_command(cmd)
     error_level = 0
     # Run ERC
     # Using old parser until --severity* and/or JSON output are fixed
     # See https://gitlab.com/kicad/code/kicad/-/issues/16924
-    errors, warnings = eeschema_parse_erc_8(cfg)
+    errors, warnings = parse_erc_json(cfg)
     skip_err, skip_wrn = apply_filters(cfg, 'ERC error/s', 'ERC warning/s')
     errors = errors-skip_err
     warnings = warnings-skip_wrn

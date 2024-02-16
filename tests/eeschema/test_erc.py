@@ -43,7 +43,7 @@ def test_erc_ok_1(test_dir):
     cmd = [PROG, '-vv', '--record', 'run_erc']
     ctx.run(cmd)
     ctx.expect_out_file(erc)
-    if context.ki5 or context.ki6 or context.ki7:
+    if not context.ki8:
         # KiCad 8 uses CLI
         ctx.expect_out_file('run_erc_eeschema_screencast.ogv')
     ctx.clean_up()

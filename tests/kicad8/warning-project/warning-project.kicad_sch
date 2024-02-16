@@ -55,7 +55,7 @@
 			(uuid "7e969d15-6cc0-4258-8b27-586608a21adb")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f"
 					(page "2")
 				)
@@ -102,7 +102,7 @@
 			(uuid "6ca3c38c-4e71-4202-b6c1-1b25f04a27ae")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f"
 					(page "3")
 				)

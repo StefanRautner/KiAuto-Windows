@@ -677,7 +677,7 @@
 			(uuid "55e740a3-0735-4744-896e-2bf5437093b9")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "P1")
 					(unit 1)
@@ -740,7 +740,7 @@
 			(uuid "afb8e687-4a13-41a1-b8c0-89a749e897fe")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "#FLG01")
 					(unit 1)
@@ -803,7 +803,7 @@
 			(uuid "6a955fc7-39d9-4c75-9a69-676ca8c0b9b2")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "#FLG02")
 					(unit 1)
@@ -866,7 +866,7 @@
 			(uuid "e615f7aa-337e-474d-9615-2ad82b1c44ca")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "#PWR01")
 					(unit 1)
@@ -934,7 +934,7 @@
 			(uuid "749dfe75-c0d6-4872-9330-29c5bbcb8ff8")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "C1")
 					(unit 1)
@@ -997,7 +997,7 @@
 			(uuid "30f15357-ce1d-48b9-93dc-7d9b1b2aa048")
 		)
 		(instances
-			(project "fail-project"
+			(project "warning-project"
 				(path "/87c78429-be2b-40ed-8d3b-56cb9666a56f/00000000-0000-0000-0000-00005ca71704"
 					(reference "#PWR02")
 					(unit 1)
