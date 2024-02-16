@@ -53,8 +53,9 @@ def test_drc_fail_1(test_dir):
     ctx.clean_up()
 
 
-@pytest.mark.skipif(context.ki5, reason="Test for KiCad 6 exclusions")
+@pytest.mark.skipif(context.ki5 or context.ki8, reason="Test for KiCad 6 exclusions")
 def test_drc_fail_exclusions(test_dir):
+    # KiCad 8 exclusions are always supported and tested by the fail
     ctx = context.TestContext(test_dir, 'DRC_Error_Exclusions', 'fail-project')
     # Here we use -v to cover "info" log level
     cmd = [PROG, '-vvvvv', 'run_drc', '-F']
@@ -92,6 +93,7 @@ def test_drc_unco_ok(test_dir):
     ctx.clean_up()
 
 
+@pytest.mark.skipif(context.ki8, reason="Not using GUI")
 def test_drc_ok_pcbnew_running(test_dir):
     """ 1) Test to overwrite the .erc file
         2) Test pcbnew already running
@@ -128,7 +130,7 @@ def test_drc_save(test_dir):
         ctx.clean_up()
 
         ctx = context.TestContext(test_dir, 'DRC_Save_2', 'zone-refill')
-        cmd = [PROG, 'export']
+        cmd = [PROG, '-vvv', '-r', 'export']
         layers = ['F.Cu', 'B.Cu', 'Edge.Cuts']
         ctx.run(cmd, extra=layers)
         ctx.expect_out_file(DEFAULT)

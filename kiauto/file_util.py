@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2022 Salvador E. Tropea
-# Copyright (c) 2020-2022 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2020-2024 Salvador E. Tropea
+# Copyright (c) 2020-2024 Instituto Nacional de Tecnologïa Industrial
 # Copyright (c) 2019 Jesse Vincent (@obra)
 # Copyright (c) 2018-2019 Seppe Stas (@seppestas) (Productize SPRL)
 # Based on ideas by: Scott Bezek (@scottbez1)
@@ -15,14 +15,15 @@ Note: Only wait_for_file_created_by_process is from the original project.
 import os
 import time
 import re
+import shlex
 import shutil
 import atexit
-from subprocess import DEVNULL
+import subprocess
 # python3-psutil
 import psutil
 import json
 
-from kiauto.misc import WRONG_ARGUMENTS, KICAD_VERSION_5_99, Config, READ_ONLY_PROBLEM, RULES_KEY
+from kiauto.misc import WRONG_ARGUMENTS, KICAD_VERSION_5_99, Config, READ_ONLY_PROBLEM, RULES_KEY, KICAD_CLI_ERROR
 from kiauto import log
 logger = log.get_logger(__name__)
 time_out_scale = 1.0
@@ -365,12 +366,29 @@ def get_log_files(out_dir, app_name, also_interposer=False):
         flog_err = open(os.path.join(out_dir, app_name+'_err.log'), 'wt')
         logger.debug('Redirecting '+app_name+' output to '+app_name+'*.log')
     else:
-        flog_out = flog_err = DEVNULL
+        flog_out = flog_err = subprocess.DEVNULL
     if also_interposer:
         os.makedirs(out_dir, exist_ok=True)
         fname = os.path.join(out_dir, app_name+'_interposer.log')
         flog_int = open(fname, 'wt')
         logger.debug('Saving '+app_name+' interposer dialog to '+fname)
     else:
-        flog_int = DEVNULL
+        flog_int = subprocess.DEVNULL
     return (flog_out, flog_err, flog_int)
+
+
+def debug_output(res):
+    if res.stdout:
+        logger.debug('- Output from command: '+res.stdout.decode())
+
+
+def run_command(command, check=True):
+    logger.debug('Executing: '+shlex.join(command))
+    try:
+        res = subprocess.run(command, check=check, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        logger.error('Running {} returned {}'.format(e.cmd, e.returncode))
+        debug_output(e)
+        exit(KICAD_CLI_ERROR)
+    debug_output(res)
+    return res.stdout.decode().rstrip()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2023 Salvador E. Tropea
-# Copyright (c) 2020-2023 Instituto Nacional de Tecnología Industrial
+# Copyright (c) 2020-2024 Salvador E. Tropea
+# Copyright (c) 2020-2024 Instituto Nacional de Tecnología Industrial
 # Copyright (c) 2019 Jesse Vincent (@obra)
 # Copyright (c) 2018-2019 Seppe Stas (@seppestas) (Productize SPRL)
 # Based on ideas by: Scott Bezek (@scottbez1)
@@ -42,7 +42,7 @@ logger = None
 from kiauto.file_util import (load_filters, wait_for_file_created_by_process, apply_filters, list_errors, list_warnings,
                               check_kicad_config_dir, restore_config, backup_config, check_lib_table, create_user_hotkeys,
                               check_input_file, memorize_project, restore_project, get_log_files, create_kicad_config,
-                              set_time_out_scale as set_time_out_scale_f)
+                              set_time_out_scale as set_time_out_scale_f, run_command)
 from kiauto.misc import (REC_W, REC_H, __version__, NO_PCB, PCBNEW_CFG_PRESENT, WAIT_START, WRONG_LAYER_NAME,
                          WRONG_PCB_NAME, PCBNEW_ERROR, WRONG_ARGUMENTS, Config, USER_HOTKEYS_PRESENT, RULES_KEY,
                          CORRUPTED_PCB, __copyright__, __license__, TIME_OUT_MULT, get_en_locale, KICAD_CFG_PRESENT,
@@ -109,7 +109,7 @@ def parse_drc_ki5(lines):
     return int(drc_errors), int(unconnected_pads)
 
 
-def parse_drc_ki6(lines):
+def parse_drc_ki6(cfg, lines):
     # A violation entry looks something like:
     #
     # [courtyards_overlap]: Courtyards overlap
@@ -127,7 +127,10 @@ def parse_drc_ki6(lines):
     #     @(99.4000 mm, 112.8900 mm): Pad 1 [Net-(J201-PadB5)] of R201 on B.Cu
     #     @(99.4000 mm, 114.5700 mm): Pad B5 [Net-(J201-PadB5)] of J201 on B.Cu
     err_regex = re.compile(r'^\[(\S+)\]: (.*)')
-    sev_regex = re.compile(r'^    (.*); Severity: (.*)')
+    if cfg.ki8:
+        sev_regex = re.compile(r'^    (.*); (.*)')
+    else:
+        sev_regex = re.compile(r'^    (.*); Severity: (.*)')
     # Collect all violations
     violations = []
     for offset in range(len(lines)-2):
@@ -156,13 +159,90 @@ def parse_drc_ki6(lines):
     return len(drc_errors), len(drc_warns)
 
 
+def parse_item(v, units):
+    severity = v['severity']
+    type = v['type']
+    desc = v['description']
+    txt = ''
+    for ln in v['items']:
+        x = ln['pos']['x']
+        y = ln['pos']['y']
+        desc = ln['description']
+        txt += f'    @({x} {units}, {y} {units}): {desc}\n'
+    return severity, type, desc, txt
+
+
+def render_items(items, units):
+    rpt = ''
+    for v in items:
+        excluded = ' (excluded)' if v.get('excluded') else ''
+        severity, type, desc, context = parse_item(v, units)
+        rpt += f'[{type}]: {desc}\n'
+        rpt += f'    ; {severity}{excluded}\n'
+        rpt += context
+    rpt += '\n'
+    return rpt
+
+
+def parse_drc_json(cfg, lines):
+    js_txt = '\n'.join(lines)
+    if log.get_level() > 2:
+        logger.debug(js_txt)
+    data = json.loads(js_txt)
+    if data['$schema'] != 'https://schemas.kicad.org/drc.v1.json':
+        logger.warning('Unknown JSON schema, DRC might fail')
+    units = data['coordinate_units']
+
+    # Reconstruct the report
+    rpt = f'** Drc report for {os.path.basename(cfg.input_file)} **\n'
+    rpt += f"** Created on {data['date']} **\n\n"
+
+    violations = data['violations']
+    rpt += f'** Found {len(violations)} DRC violations **\n'
+    rpt += render_items(violations, units)
+
+    unconnected_items = data['unconnected_items']
+    rpt += f'** Found {len(unconnected_items)} unconnected pads **\n'
+    rpt += render_items(unconnected_items, units)
+
+    schematic_parity = data['schematic_parity']
+    rpt += f'** Found {len(schematic_parity)} Footprint errors **\n'
+    rpt += render_items(schematic_parity, units)
+
+    rpt += '** End of Report **\n'
+
+    with open(cfg.output_file, 'wt') as f:
+        f.write(rpt)
+    # Adapt the data
+    cfg.errs = []
+    cfg.wrns = []
+    for v in violations+schematic_parity:
+        if v.get('excluded'):
+            continue
+        severity, type, desc, context = parse_item(v, units)
+        txt = f'({type}) {desc}; Severity: {severity}\n{context}'
+        if severity == 'error':
+            cfg.errs.append(txt)
+        else:
+            cfg.wrns.append(txt)
+    for v in unconnected_items:
+        if v.get('excluded'):
+            continue
+        severity, type, desc, context = parse_item(v, units)
+        cfg.wrns.append(f'({type}) {desc}; Severity: warning\n{context}')
+
+    return len(cfg.errs), len(cfg.wrns)
+
+
 def parse_drc(cfg):
     with open(cfg.output_file, 'rt') as f:
         lines = f.read().splitlines()
     if cfg.ki5:
         return parse_drc_ki5(lines)
+    elif cfg.ki8:
+        return parse_drc_json(cfg, lines)
     else:
-        return parse_drc_ki6(lines)
+        return parse_drc_ki6(cfg, lines)
 
 
 def dismiss_already_running():
@@ -514,6 +594,22 @@ def run_drc_python(cfg):
         logger.info('Saving PCB')
         os.rename(cfg.input_file, cfg.input_file + '-bak')
         cfg.board.Save(cfg.input_file)
+
+
+def run_drc_cli(cfg):
+    logger.debug("Using kicad-cli instead of running KiCad")
+    # Currently not available in the CLI
+    import pcbnew
+    logger.debug("Re-filling zones")
+    filler = pcbnew.ZONE_FILLER(cfg.board)
+    filler.Fill(cfg.board.Zones())
+    cfg.board.Save(cfg.input_file)
+    # The save removes the exclusions ...
+    restore_project(cfg)
+    # Run the DRC from CLI
+    cmd = [cfg.kicad_cli, 'pcb', 'drc', '-o', cfg.output_file, '--format', 'json', '--severity-all', '--schematic-parity',
+           cfg.input_file]
+    run_command(cmd)
 
 
 def run_drc_n(cfg):
@@ -1360,7 +1456,7 @@ if __name__ == '__main__':  # noqa: C901
     # short commands: fFios
     drc_parser = subparsers.add_parser('run_drc', help='Run Design Rules Checker on a PCB')
     drc_parser.add_argument('--errors_filter', '-f', nargs=1, help='File with filters to exclude errors')
-    drc_parser.add_argument('--force_gui', '-F', help='Force the use of the GUI (KiCad 6)', action='store_true')
+    drc_parser.add_argument('--force_gui', '-F', help='Force the use of the GUI (KiCad 6/7 not 8+)', action='store_true')
     drc_parser.add_argument('--ignore_unconnected', '-i', help='Ignore unconnected paths', action='store_true')
     drc_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file', default=['drc_result.rpt'])
     drc_parser.add_argument('--save', '-s', help='Save after DRC (updating filled zones)', action='store_true')
@@ -1644,21 +1740,25 @@ if __name__ == '__main__':  # noqa: C901
     cfg.output_file = output_file
     # Name for the video
     cfg.video_name = 'pcbnew_'+args.command+'_screencast.ogv'
-    # Interposer settings
-    check_interposer(args, logger, cfg)
-    # When using the interposer inform the output file name using the environment
-    setup_interposer_filename(cfg)
     #
     # Do all the work
     #
     error_level = 0
-    if args.command == 'run_drc' and not cfg.ki5 and not args.force_gui:
-        # First command to migrate to Python!
-        run_drc_python(cfg)
+    if args.command == 'run_drc' and not cfg.ki5 and (not args.force_gui or cfg.ki8):
+        if cfg.ki8:
+            # CLI implementation
+            run_drc_cli(cfg)
+        else:
+            # First command to migrate to Python!
+            run_drc_python(cfg)
         error_level = process_drc_out(cfg)
         do_retry = False
         cfg.use_interposer = cfg.enable_interposer = False
     else:
+        # Interposer settings
+        check_interposer(args, logger, cfg)
+        # When using the interposer inform the output file name using the environment
+        setup_interposer_filename(cfg)
         flog_out, flog_err, cfg.flog_int = get_log_files(output_dir, 'pcbnew', also_interposer=cfg.enable_interposer)
         if cfg.enable_interposer:
             flog_out = subprocess.PIPE
