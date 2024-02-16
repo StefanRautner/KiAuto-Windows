@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] -
+### Added
+- Support for KiCad 8 DRC from command line
+  - New DRC options
+    - Schematic parity
+    - All errors for each track
+    - Units used in the report
 
 ## [2.2.8] - 2023-10-22
 ### Added

@@ -596,7 +596,7 @@ def run_drc_python(cfg):
         cfg.board.Save(cfg.input_file)
 
 
-def run_drc_cli(cfg):
+def run_drc_cli(cfg, schematic_parity, all_track_errors, units):
     logger.debug("Using kicad-cli instead of running KiCad")
     # Currently not available in the CLI
     import pcbnew
@@ -607,8 +607,12 @@ def run_drc_cli(cfg):
     # The save removes the exclusions ...
     restore_project(cfg)
     # Run the DRC from CLI
-    cmd = [cfg.kicad_cli, 'pcb', 'drc', '-o', cfg.output_file, '--format', 'json', '--severity-all', '--schematic-parity',
-           cfg.input_file]
+    cmd = [cfg.kicad_cli, 'pcb', 'drc', '-o', cfg.output_file, '--format', 'json', '--severity-all', '--units', units]
+    if schematic_parity:
+        cmd.append('--schematic-parity')
+    if all_track_errors:
+        cmd.append('--all-track-errors')
+    cmd.append(cfg.input_file)
     run_command(cmd)
 
 
@@ -1453,13 +1457,16 @@ if __name__ == '__main__':  # noqa: C901
     export_parser.add_argument('output_dir', help='Output directory')
     export_parser.add_argument('layers', nargs='+', help='Which layers to include')
 
-    # short commands: fFios
+    # short commands: fFiopstu
     drc_parser = subparsers.add_parser('run_drc', help='Run Design Rules Checker on a PCB')
     drc_parser.add_argument('--errors_filter', '-f', nargs=1, help='File with filters to exclude errors')
     drc_parser.add_argument('--force_gui', '-F', help='Force the use of the GUI (KiCad 6/7 not 8+)', action='store_true')
     drc_parser.add_argument('--ignore_unconnected', '-i', help='Ignore unconnected paths', action='store_true')
     drc_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file', default=['drc_result.rpt'])
     drc_parser.add_argument('--save', '-s', help='Save after DRC (updating filled zones)', action='store_true')
+    drc_parser.add_argument('--schematic-parity', '-p', help='Check PCB vs SCH parity (KiCad 8+)', action='store_true')
+    drc_parser.add_argument('--all-track-errors', '-t', help='Report all errors for each track (KiCad 8+)', action='store_true')
+    drc_parser.add_argument('--units', '-u', help='Report units (KiCad 8+)', default='mm', choices=['in', 'mm', 'mils'], type=str)
     drc_parser.add_argument('kicad_pcb_file', help='KiCad PCB file')
     drc_parser.add_argument('output_dir', help='Output directory')
 
@@ -1747,7 +1754,7 @@ if __name__ == '__main__':  # noqa: C901
     if args.command == 'run_drc' and not cfg.ki5 and (not args.force_gui or cfg.ki8):
         if cfg.ki8:
             # CLI implementation
-            run_drc_cli(cfg)
+            run_drc_cli(cfg, args.schematic_parity, args.all_track_errors, args.units)
         else:
             # First command to migrate to Python!
             run_drc_python(cfg)
