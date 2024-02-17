@@ -1281,6 +1281,7 @@ def create_pcbnew_config(cfg):
                 conf = {}
                 conf["window"] = {"pos_x": 0, "pos_y": 0, "size_x": cfg.rec_width, "size_y": cfg.rec_height}
                 conf["camera"] = {"projection_mode": int(not cfg.orthographic), "animation_enabled": False}
+                conf["aui"] = {"show_layer_manager": False}
                 conf["render"] = {"show_footprints_insert": not cfg.no_smd,
                                   "show_footprints_normal": not cfg.no_tht,
                                   "show_footprints_virtual": not cfg.no_virtual,
