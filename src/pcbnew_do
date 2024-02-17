@@ -167,8 +167,8 @@ def parse_item(v, units):
     for ln in v['items']:
         x = ln['pos']['x']
         y = ln['pos']['y']
-        desc = ln['description']
-        txt += f'    @({x} {units}, {y} {units}): {desc}\n'
+        dsc = ln['description']
+        txt += f'    @({x} {units}, {y} {units}): {dsc}\n'
     return severity, type, desc, txt
 
 
