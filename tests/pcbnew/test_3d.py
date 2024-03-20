@@ -30,8 +30,8 @@ def test_3d_view_1(test_dir):
     cmd = [PROG, '-r', '-vvv', '3d_view', '-x', '1', '--output_name', 'good_3d_rt_1.png', '-r', '-d', '-w', '20',
            '-X', '3', '-Z', '3']
     if not context.ki8:
-       # KiCad 8 does a zoom to fit
-       cmd.extend(['--zoom', '3'])
+        # KiCad 8 does a zoom to fit
+        cmd.extend(['--zoom', '3'])
     ctx.run(cmd)
     ctx.compare_image('good_3d_rt_1.png', fuzz='50%', tol=2000)
     ctx.clean_up()
