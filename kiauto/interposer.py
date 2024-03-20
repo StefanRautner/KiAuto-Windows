@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2022-2023 Salvador E. Tropea
-# Copyright (c) 2022-2023 Instituto Nacional de Tecnologïa Industrial
+# Copyright (c) 2022-2024 Salvador E. Tropea
+# Copyright (c) 2022-2024 Instituto Nacional de Tecnologïa Industrial
 # License: Apache 2.0
 # Project: KiAuto (formerly kicad-automation-scripts)
 import atexit
@@ -10,10 +10,11 @@ import psutil
 from queue import Queue, Empty
 import re
 import shutil
-from sys import exit
+from sys import exit, exc_info
 from tempfile import mkdtemp
 from threading import Thread
 import time
+from traceback import extract_stack, format_list, print_tb
 from kiauto.misc import KICAD_DIED, CORRUPTED_PCB, PCBNEW_ERROR, EESCHEMA_ERROR
 from kiauto import log
 from kiauto.ui_automation import xdotool, wait_for_window, wait_point, text_replace
@@ -434,6 +435,15 @@ def exit_pcb_ees_error(cfg):
     exit(PCBNEW_ERROR if cfg.is_pcbnew else EESCHEMA_ERROR)
 
 
+def trace_dump(cfg):
+    cfg.logger.error('Trace stack:')
+    (type, value, traceback) = exc_info()
+    if traceback is None:
+        print(''.join(format_list(extract_stack()[:-2])))
+    else:
+        print_tb(traceback)
+
+
 def unknown_dialog(cfg, title, msgs=None, fatal=True):
     if msgs is None:
         msgs = collect_dialog_messages(cfg, title)
@@ -442,6 +452,7 @@ def unknown_dialog(cfg, title, msgs=None, fatal=True):
     if fatal:
         cfg.logger.error(msg_unk)
         cfg.logger.error(msg_msgs)
+        trace_dump(cfg)
         exit_pcb_ees_error(cfg)
     cfg.logger.warning(msg_unk)
     cfg.logger.warning(msg_msgs)
@@ -505,10 +516,13 @@ def dismiss_file_open_error(cfg, title):
     fname = os.path.basename(cfg.input_file)
     # KiCad 6.x and <7.0.7: PCB 'xxxx' is already open.
     # KiCad 7.0.7: PCB 'xxxx' is already open by 'user' at 'host'
-    start = kind+" '"+fname+"' is already open"
+    # KiCad 8.0.1: PCB 'ABSOLUTE/xxxx' is already open by 'user' at 'host'
+    start = kind+" '"
+    follow = "' is already open"
     found = False
+    cfg.logger.error(start)
     for msg in msgs:
-        if msg.startswith(start) and msg.endswith("."):
+        if msg.startswith(start) and follow in msg and msg.endswith("."):
             found = True
             fname = msg
             break
