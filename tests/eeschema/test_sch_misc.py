@@ -23,7 +23,7 @@ sys.path.insert(0, prev_dir)
 from utils import context
 sys.path.insert(0, os.path.dirname(prev_dir))
 from kiauto.misc import (EESCHEMA_CFG_PRESENT, KICAD_CFG_PRESENT, NO_SCHEMATIC, WRONG_SCH_NAME, EESCHEMA_ERROR,
-                         WRONG_ARGUMENTS)
+                         WRONG_ARGUMENTS, KICAD_CLI_ERROR)
 
 PROG = 'eeschema_do'
 BOGUS_SCH = 'bogus'
@@ -105,9 +105,13 @@ def test_bogus_sch(test_dir):
     with open(sch, 'w') as f:
         f.write('dummy')
     cmd = [PROG, '-vv', '-r', 'run_erc']
-    ctx.run(cmd, EESCHEMA_ERROR, filename=sch)
+    # KiCad 8 uses kicad-cli
+    err_level = KICAD_CLI_ERROR if context.ki8 else EESCHEMA_ERROR
+    ctx.run(cmd, err_level, filename=sch)
     if context.ki5:
         assert ctx.search_err(r"eeschema reported an error") is not None
+    elif context.ki8:
+        assert ctx.search_err(r"ERROR:Running") is not None
     else:
         assert (ctx.search_err(r"ERROR:Error loading schematic file") or
                 ctx.search_err(r"ERROR:Eeschema created an error dialog")) is not None
@@ -122,6 +126,7 @@ def test_sch_wrong_command(test_dir):
     ctx.clean_up()
 
 
+@pytest.mark.skipif(context.ki8, reason="KiCad 8 uses cli")
 def test_time_out(test_dir):
     """ ERC time-out """
     ctx = context.TestContextSCH(test_dir, 'SCH_Time_Out', 'good-project')
