@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ki_release: [ki5, ki6, ki7]
+        ki_release: [ki5, ki6, ki7, ki8]
         w_tests: [interposer, no_interposer]
 
     runs-on: ubuntu-latest
