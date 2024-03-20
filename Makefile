@@ -43,6 +43,11 @@ test_server_ki7:
 	pytest-3 --test_dir output
 	python3-coverage report
 
+test_server_ki8:
+	python3-coverage erase
+	pytest-3 --test_dir output
+	python3-coverage report
+
 test_server_nightly:
 	python3-coverage erase
 	KIAUS_USE_NIGHTLY=7.0 pytest-3 --test_dir output
