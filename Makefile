@@ -139,6 +139,15 @@ test_docker_local_k7:
 	$(PY_COV) html
 	rm .coverage
 
+test_docker_local_k8:
+	rm -rf output
+	$(PY_COV) erase
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki8 \
+		/bin/bash -c "flake8 . --count --statistics ; $(PYTEST) --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad*/ .coverage.*"
+	$(PY_COV) report
+	$(PY_COV) html
+	rm .coverage.*
+
 test_docker_local_k7_1:
 	rm -rf output
 	$(PY_COV) erase
@@ -154,11 +163,19 @@ test_docker_local_k7_1:
 
 test_docker_local_k8_1:
 	rm -rf output
-	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:nightly \
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki8 \
 		/bin/bash -c "$(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad8/ .coverage.*"
 	rm .coverage.*
 
 t1k8: test_docker_local_k8_1
+
+test_docker_local_k8_1_ni:
+	rm -rf output
+	docker run --rm -v $(CWD):$(CWD) --workdir="$(CWD)" ghcr.io/inti-cmnb/kicad_auto_test:ki8 \
+		/bin/bash -c "export KIAUTO_INTERPOSER_DISABLE=1; $(PYTEST) --log-cli-level debug -k '$(SINGLE_TEST)' --test_dir output ; chown -R $(USER_ID):$(GROUP_ID) output/ tests/kicad8/ .coverage.*"
+	rm .coverage.*
+
+t1k8ni: test_docker_local_k8_1_ni
 
 test_docker_local_ng:
 	rm -rf output
