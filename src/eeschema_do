@@ -263,6 +263,9 @@ def eeschema_plot_schematic_i(cfg, open_keys):
     send_keys(cfg, 'Plot', 'alt+a' if cfg.all_pages else 'alt+c')
     # Wait for the file
     wait_create_i(cfg, 'plot')
+    if cfg.ki8:
+        # Why?! the ESC erases the file name and doesn't exit?!
+        send_keys(cfg, 'Moving away from file name', 'Tab')
     # Close the dialog
     send_keys(cfg, 'Closing dialog', 'Escape', closes=dialog)
 
