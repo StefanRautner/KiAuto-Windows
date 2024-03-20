@@ -46,12 +46,11 @@ jobs:
         name: Test_Output_${{ matrix.ki_release }}_${{ matrix.w_tests }}
         path: output
     - name: Upload Coverage
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.ki_release }}_${{ matrix.w_tests }}
-        COVERALLS_PARALLEL: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        flag-name: ${{ matrix.ki_release }}_${{ matrix.w_tests }}
+        parallel: true
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   coveralls:
     name: Finish Coveralls
