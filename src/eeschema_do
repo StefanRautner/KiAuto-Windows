@@ -228,12 +228,14 @@ def wait_create(cfg, name):
 
 def eeschema_plot_schematic_cli(cfg):
     outf = cfg.output_file if cfg.export_format == 'pdf' else os.path.dirname(cfg.output_file)
-    cmd = [cfg.kicad_cli, 'sch', 'export', cfg.export_format, '-o', outf, '-t', cfg.color_theme]
+    cmd = [cfg.kicad_cli, 'sch', 'export', cfg.export_format, '-o', outf]
+    if cfg.export_format != 'hpgl':
+        cmd.extend(['-t', cfg.color_theme])
     if cfg.monochrome:
         cmd.append('--black-and-white')
     if cfg.no_frame:
         cmd.append('--exclude-drawing-sheet')
-    if not cfg.background_color:
+    if not cfg.background_color and cfg.export_format != 'dxf' and cfg.export_format != 'hpgl':
         cmd.append('--no-background-color')
     if not cfg.all_pages:
         cmd.append('--plot-one')
