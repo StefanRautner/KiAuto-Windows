@@ -303,7 +303,10 @@ class TestContext(object):
     def ps_to_png(self, ps):
         png = os.path.splitext(ps)[0]+'.png'
         logging.debug('Converting '+ps+' to '+png)
-        cmd = ['convert', '-density', '150', ps, '-rotate', '90', png]
+        cmd = ['convert', '-density', '150', ps, '-rotate', '90',
+               # Avoid the transparency, not repeatable across KiCad releases
+               '-background', 'white', '-alpha', 'background', '-alpha', 'off',
+               png]
         subprocess.check_call(cmd)
         return os.path.basename(png)
 
@@ -325,12 +328,16 @@ class TestContext(object):
         logging.debug('Splitting '+reference)
         cmd = ['convert', '-density', '150',
                os.path.join(self.ref_dir, reference),
+               # Avoid the transparency, not repeatable across KiCad releases
+               '-background', 'white', '-alpha', 'background', '-alpha', 'off',
                self.get_out_path('ref-%d.png')]
         subprocess.check_call(cmd)
         # Split the generated
         logging.debug('Splitting '+gen)
         cmd = ['convert', '-density', '150',
                self.get_out_path(gen),
+               # Avoid the transparency, not repeatable across KiCad releases
+               '-background', 'white', '-alpha', 'background', '-alpha', 'off',
                self.get_out_path('gen-%d.png')]
         subprocess.check_call(cmd)
         # Chek number of pages
