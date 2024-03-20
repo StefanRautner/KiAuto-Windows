@@ -310,16 +310,16 @@ class TestContext(object):
         subprocess.check_call(cmd)
         return os.path.basename(png)
 
-    def compare_ps(self, image, reference=None, diff='diff.png'):
+    def compare_ps(self, image, reference=None, diff='diff.png', tol=100):
         """ For PSs, rendering to PNG """
         if reference is None:
             reference = image
         image_png = self.ps_to_png(self.get_out_path(image))
         reference_png = self.ps_to_png(os.path.join(self.ref_dir, reference))
-        self.compare_image(image_png, reference_png, diff)
+        self.compare_image(image_png, reference_png, diff, tol=tol)
         os.remove(os.path.join(self.ref_dir, reference_png))
 
-    def compare_pdf(self, gen, reference=None, diff='diff-{}.png', fuzz='30%'):
+    def compare_pdf(self, gen, reference=None, diff='diff-{}.png', fuzz='30%', tol=100):
         """ For multi-page PDFs """
         if reference is None:
             reference = gen
@@ -349,7 +349,7 @@ class TestContext(object):
         for page in range(len(ref_pages)):
             self._compare_image(self.get_out_path('ref-'+str(page)+'.png'),
                                 self.get_out_path('gen-'+str(page)+'.png'),
-                                self.get_out_path(diff.format(page)), fuzz=fuzz)
+                                self.get_out_path(diff.format(page)), fuzz=fuzz, tol=tol)
 
     def compare_txt(self, text, reference=None, diff='diff.txt'):
         if reference is None:
