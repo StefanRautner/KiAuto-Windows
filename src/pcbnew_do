@@ -22,6 +22,7 @@ import atexit
 import gettext
 import json
 import os
+import psutil
 import re
 import shutil
 import subprocess
@@ -859,7 +860,10 @@ def wait_ray_tracer(cfg):
         while (counter > 0) and (time.clock_gettime(time.CLOCK_MONOTONIC) < end):
             cpu_usage = cfg.kicad_process.cpu_percent(0.3)
             for child in children:
-                cpu_usage += child.cpu_percent(0.3)
+                try:
+                    cpu_usage += child.cpu_percent(0.3)
+                except psutil.NoSuchProcess:
+                    pass
             if cpu_usage > 5:
                 if counter < 5:
                     counter = counter + 1
