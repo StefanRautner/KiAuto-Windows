@@ -238,7 +238,10 @@ def eeschema_plot_schematic_cli(cfg):
     if not cfg.background_color and cfg.export_format != 'dxf' and cfg.export_format != 'hpgl':
         cmd.append('--no-background-color')
     if not cfg.all_pages:
-        cmd.append('--plot-one')
+        if cfg.ki8:
+            cmd.extend(['--pages', '1'])
+        else:
+            cmd.append('--plot-one')
     cmd.append(cfg.input_file)
     run_command(cmd)
 
@@ -841,15 +844,14 @@ def wait_eeschema_start_by_msg(cfg):
 
 
 def can_be_done_using_cli(command, cfg):
+    # Nothing for KiCad 5/6
     if not cfg.ki7:
         return False
-    if command in {'netlist', 'bom_xml'}:
+    # All for KiCad 8
+    if cfg.ki8:
         return True
-    if cfg.ki8 and command=='export':
-        # TODO: KiCad 8 supports specifying the pages
-        # Once added KiCad 8 should return True for all
-        return cfg.all_pages
-    if cfg.ki8 and command=='run_erc':
+    # Explore what KiCad 7 can do
+    if command in {'netlist', 'bom_xml'}:
         return True
     # Export can be partially done using the CLI
     if command == 'export':
