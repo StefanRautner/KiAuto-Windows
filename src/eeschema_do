@@ -229,7 +229,10 @@ def wait_create(cfg, name):
 def eeschema_plot_schematic_cli(cfg):
     outf = cfg.output_file if cfg.export_format == 'pdf' else os.path.dirname(cfg.output_file)
     cmd = [cfg.kicad_cli, 'sch', 'export', cfg.export_format, '-o', outf]
-    if cfg.export_format != 'hpgl':
+    if cfg.export_format == 'hpgl':
+        # HPGL specific
+        cmd.extend(['--pen-size', str(cfg.hpgl_pen_size), '--origin', str(cfg.hpgl_origin)])
+    else:
         cmd.extend(['-t', cfg.color_theme])
     if cfg.monochrome:
         cmd.append('--black-and-white')
@@ -896,9 +899,10 @@ if __name__ == '__main__':
     export_parser.add_argument('--monochrome', '-m', help='Black and white output', action='store_true')
     export_parser.add_argument('--no_frame', '-F', help='No frame and title block', action='store_true')
     export_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file')
-    export_parser.add_argument('--color_theme', '-c', type=str, help='Name of the color theme [_builtin_default] (KiCad 6+)',
-                               default='_builtin_default')
-    export_parser.add_argument('--background_color', '-b', action='store_true', help='Use the background color (KiCad 6+)')
+    export_parser.add_argument('--color_theme', '-c', type=str, help='Name of the color theme [_builtin_default]'
+                               ' (KiCad 6+, not for HPGL)', default='_builtin_default')
+    export_parser.add_argument('--background_color', '-b', action='store_true', help='Use the background color'
+                               ' (KiCad 6+, not for HPGL and DXF)')
     export_parser.add_argument('--hpgl_origin', '-O', type=int, choices=range(4), default=0,
                                help='HPGL origin: 0 bottom left, 1 centered, 2 page fit, 3 content fit (KiCad 6+)')
     export_parser.add_argument('--hpgl_pen_size', '-p', type=float, help='HPGL pen size in mm [0.4826] (KiCad 6+)',
