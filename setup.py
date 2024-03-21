@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from kiauto.misc import __version__, __author__, __email__, __url__
 
 # Use the README.md as a long description.
@@ -16,7 +16,7 @@ setup(name='kiauto',
       author_email=__email__,
       url=__url__,
       # Packages are marked using __init__.py
-      packages=find_packages(),
+      packages=find_namespace_packages(),
       scripts=['src/eeschema_do', 'src/pcbnew_do', 'src/kicad2step_do'],
       install_requires=['xvfbwrapper', 'psutil'],
       include_package_data=True,
