@@ -1424,7 +1424,6 @@ def wait_pcbnew_start_by_msg(cfg):
 
 def setup_config_files(cfg):
     # Back-up the current pcbnew configuration
-    check_kicad_config_dir(cfg)
     cfg.conf_pcbnew_bkp = backup_config('PCBnew', cfg.conf_pcbnew, PCBNEW_CFG_PRESENT, cfg)
     if cfg.conf_colors:
         cfg.conf_colors_bkp = backup_config('Colors', cfg.conf_colors, PCBNEW_CFG_PRESENT, cfg)
@@ -1742,6 +1741,8 @@ if __name__ == '__main__':  # noqa: C901
         load_filters(cfg, args.errors_filter[0])
 
     memorize_project(cfg)
+    # Ensure we have a config dir
+    check_kicad_config_dir(cfg)
     # Make sure the user has fp-lib-table
     check_lib_table(cfg.user_fp_lib_table, cfg.sys_fp_lib_table)
     # Create output dir, compute full name for output file and remove it

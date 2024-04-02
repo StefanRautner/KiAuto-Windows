@@ -867,8 +867,6 @@ def can_be_done_using_cli(command, cfg):
 
 
 def setup_config_files(cfg):
-    # Ensure we have a config dir
-    check_kicad_config_dir(cfg)
     # Back-up the current eeschema configuration
     cfg.conf_eeschema_bkp = backup_config('Eeschema', cfg.conf_eeschema, EESCHEMA_CFG_PRESENT, cfg)
     # Create a suitable configuration
@@ -980,6 +978,8 @@ if __name__ == '__main__':
     #
     # Force english + UTF-8
     os.environ['LANG'] = get_en_locale(logger)
+    # Ensure we have a config dir
+    check_kicad_config_dir(cfg)
     # Make sure the user has sym-lib-table
     check_lib_table(cfg.user_sym_lib_table, cfg.sys_sym_lib_table)
     #
