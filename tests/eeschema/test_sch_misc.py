@@ -29,6 +29,7 @@ PROG = 'eeschema_do'
 BOGUS_SCH = 'bogus'
 
 
+@pytest.mark.skipif(context.ki8, reason="KiCad 8 uses cli")
 def test_eeschema_config_backup(test_dir):
     """ Here we test the extreme situation that a previous run left a config
         back-up and the user must take action. """
@@ -51,6 +52,7 @@ def test_eeschema_config_backup(test_dir):
     ctx.clean_up()
 
 
+@pytest.mark.skipif(context.ki8, reason="KiCad 8 uses cli")
 def test_kicad_common_config_backup(test_dir):
     """ Here we test the extreme situation that a previous run left a config
         back-up and the user must take action. """

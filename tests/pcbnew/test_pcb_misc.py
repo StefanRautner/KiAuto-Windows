@@ -43,7 +43,7 @@ def test_pcbnew_config_backup(test_dir):
         f.write('Dummy back-up\n')
     # Run the command
     try:
-        cmd = [PROG, 'run_drc']
+        cmd = [PROG, 'ipc_netlist']
         ctx.run(cmd, PCBNEW_CFG_PRESENT)
     finally:
         os.remove(old_config_file)
