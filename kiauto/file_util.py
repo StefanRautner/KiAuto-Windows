@@ -247,7 +247,7 @@ def create_kicad_config(cfg):
             kiconf['system'] = {"editor_name": "/bin/cat"}
             # Copy the environment vars if available
             if cfg.conf_kicad_bkp:
-                vars = Config.get_config_vars_json(cfg.conf_kicad_bkp)
+                vars = Config.get_config_vars_json(cfg.conf_kicad_bkp, logger)
                 if vars:
                     kiconf['environment']['vars'] = vars
             text_file.write(json.dumps(kiconf))

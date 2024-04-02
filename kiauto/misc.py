@@ -37,6 +37,7 @@ KICAD_DIED = 16
 READ_ONLY_PROBLEM = 17
 WONT_OVERWRITE = 18
 KICAD_CLI_ERROR = 19
+CORRUPTED_CONFIG = 20
 # Wait 60 s to pcbnew/eeschema window to be present
 WAIT_START = 60
 # Name for testing versions
@@ -291,7 +292,7 @@ class Config(object):
     def load_kicad_environment(self, logger):
         self.env = {}
         if self.conf_kicad_json:
-            env = self.get_config_vars_json(self.conf_kicad)
+            env = self.get_config_vars_json(self.conf_kicad, logger)
             if env:
                 self.env = env
         else:
@@ -302,9 +303,14 @@ class Config(object):
         logger.debug('KiCad environment: '+str(self.env))
 
     @staticmethod
-    def get_config_vars_json(file):
+    def get_config_vars_json(file, logger):
         with open(file, "rt") as f:
-            data = json.load(f)
+            raw_data = f.read()
+            try:
+                data = json.loads(raw_data)
+            except json.decoder.JSONDecodeError:
+                logger.error(f"Corrupted KiCad config file `{file}`:\n{raw_data}")
+                exit(CORRUPTED_CONFIG)
         if 'environment' in data and 'vars' in data['environment']:
             return data['environment']['vars']
         return None
@@ -348,4 +354,4 @@ __license__ = 'Apache 2.0'
 __email__ = 'stropea@inti.gob.ar'
 __status__ = 'stable'
 __url__ = 'https://github.com/INTI-CMNB/KiAuto/'
-__version__ = '2.3.0'
+__version__ = '2.3.1'
