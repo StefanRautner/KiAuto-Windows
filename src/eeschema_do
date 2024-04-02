@@ -866,6 +866,25 @@ def can_be_done_using_cli(command, cfg):
     return False
 
 
+def setup_config_files(cfg):
+    # Ensure we have a config dir
+    check_kicad_config_dir(cfg)
+    # Back-up the current eeschema configuration
+    cfg.conf_eeschema_bkp = backup_config('Eeschema', cfg.conf_eeschema, EESCHEMA_CFG_PRESENT, cfg)
+    # Create a suitable configuration
+    create_eeschema_config(cfg)
+    # Back-up the current kicad_common configuration
+    cfg.conf_kicad_bkp = backup_config('KiCad common', cfg.conf_kicad, KICAD_CFG_PRESENT, cfg)
+    # Create a suitable configuration
+    create_kicad_config(cfg)
+    if cfg.kicad_version >= KICAD_VERSION_5_99:
+        # KiCad 6 breaks menu short-cuts, but we can configure user hotkeys
+        # Back-up the current user.hotkeys configuration
+        cfg.conf_hotkeys_bkp = backup_config('User hotkeys', cfg.conf_hotkeys, USER_HOTKEYS_PRESENT, cfg)
+        # Create a suitable configuration
+        create_user_hotkeys(cfg)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='KiCad schematic automation')
     subparsers = parser.add_subparsers(help='Command:', dest='command')
@@ -961,22 +980,6 @@ if __name__ == '__main__':
     #
     # Force english + UTF-8
     os.environ['LANG'] = get_en_locale(logger)
-    # Ensure we have a config dir
-    check_kicad_config_dir(cfg)
-    # Back-up the current eeschema configuration
-    cfg.conf_eeschema_bkp = backup_config('Eeschema', cfg.conf_eeschema, EESCHEMA_CFG_PRESENT, cfg)
-    # Create a suitable configuration
-    create_eeschema_config(cfg)
-    # Back-up the current kicad_common configuration
-    cfg.conf_kicad_bkp = backup_config('KiCad common', cfg.conf_kicad, KICAD_CFG_PRESENT, cfg)
-    # Create a suitable configuration
-    create_kicad_config(cfg)
-    if cfg.kicad_version >= KICAD_VERSION_5_99:
-        # KiCad 6 breaks menu short-cuts, but we can configure user hotkeys
-        # Back-up the current user.hotkeys configuration
-        cfg.conf_hotkeys_bkp = backup_config('User hotkeys', cfg.conf_hotkeys, USER_HOTKEYS_PRESENT, cfg)
-        # Create a suitable configuration
-        create_user_hotkeys(cfg)
     # Make sure the user has sym-lib-table
     check_lib_table(cfg.user_sym_lib_table, cfg.sys_sym_lib_table)
     #
@@ -1026,6 +1029,7 @@ if __name__ == '__main__':
         do_retry = False
         cfg.use_interposer = cfg.enable_interposer = False
     else:
+        setup_config_files(cfg)
         # Interposer settings
         check_interposer(args, logger, cfg)
         flog_out, flog_err, cfg.flog_int = get_log_files(output_dir, 'eeschema', also_interposer=cfg.enable_interposer)
