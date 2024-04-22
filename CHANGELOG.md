@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [2.3.1] - Unreleased
+### Added
+- 3D render options to control:
+  - KiCad 8:
+    - User drawings
+    - User Eco 1
+    - User Eco 2
+    - Not realistic
+  - KiCad 5:
+    - User comments/drawings
+    - User eco 1/2
+    - Realistic mode
 ### Changed
 - Better error message when kicad_common.json is corrupted (INTI-CMNB/KiBot#599)
 

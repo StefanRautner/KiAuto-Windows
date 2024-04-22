@@ -1265,16 +1265,31 @@ def create_pcbnew_config(cfg):
             # Colors for the 3D Viewer
             if cfg.bg_color_1 is not None:
                 conf = {}
+                if cfg.ki8 and cfg.use_layer_colors:
+                    # KiCad 8 doesn't have a mode for this, we must emulate
+                    copper = "rgb(77, 127, 196)"  # Top
+                    silk_bottom = "rgb(232, 178, 167)"
+                    silk_top = "rgb(242, 237, 161)"
+                    solder_bottom = "rgba(2, 255, 238, 0.400)"
+                    solder_top = "rgba(216, 100, 255, 0.400)"
+                    solder_paste = "rgba(180, 160, 154, 0.902)"  # Top
+                else:
+                    copper = to_rgb(cfg.copper_color)
+                    silk_bottom = to_rgb(cfg.silk_color, bottom=True)
+                    silk_top = to_rgb(cfg.silk_color)
+                    solder_bottom = to_rgb(cfg.sm_color, bottom=True)
+                    solder_top = to_rgb(cfg.sm_color)
+                    solder_paste = to_rgb(cfg.sp_color)
                 conf["3d_viewer"] = {"background_bottom": to_rgb(cfg.bg_color_1),
                                      "background_top": to_rgb(cfg.bg_color_2),
                                      "board": to_rgb(cfg.board_color),
-                                     "copper": to_rgb(cfg.copper_color),
-                                     "silkscreen_bottom": to_rgb(cfg.silk_color, bottom=True),
-                                     "silkscreen_top": to_rgb(cfg.silk_color),
-                                     "soldermask_bottom": to_rgb(cfg.sm_color, bottom=True),
-                                     "soldermask_top": to_rgb(cfg.sm_color),
-                                     "solderpaste": to_rgb(cfg.sp_color),
-                                     "use_board_stackup_colors": False}
+                                     "copper": copper,
+                                     "silkscreen_bottom": silk_bottom,
+                                     "silkscreen_top": silk_top,
+                                     "soldermask_bottom": solder_bottom,
+                                     "soldermask_top": solder_top,
+                                     "solderpaste": solder_paste,
+                                     "use_board_stackup_colors": cfg.use_stackup_colors}
                 json_text = json.dumps(conf)
                 os.makedirs(os.path.dirname(cfg.conf_colors), exist_ok=True)
                 with open(cfg.conf_colors, "wt") as color_file:
@@ -1297,12 +1312,23 @@ def create_pcbnew_config(cfg):
                                   "show_zones": not cfg.hide_zones,
                                   "clip_silk_on_via_annulus": not cfg.dont_clip_silk_on_via_annulus,
                                   "subtract_mask_from_silk": not cfg.dont_substrack_mask_from_silk,
-                                  "realistic": not cfg.use_layer_colors,
                                   "show_board_body": not cfg.hide_board_body,
                                   "show_comments": cfg.show_comments,
-                                  "show_eco": cfg.show_eco,
                                   "show_adhesive": cfg.show_adhesive}
-                json_text = json.dumps(conf)
+                render = conf["render"]
+                if cfg.ki8:
+                    render["show_drawings"] = cfg.show_drawings
+                    if cfg.show_eco and not (cfg.show_eco1 or cfg.show_eco2):
+                        # Some compatibility
+                        cfg.show_eco1 = cfg.show_eco2 = True
+                    render["show_eco1"] = cfg.show_eco1
+                    render["show_eco2"] = cfg.show_eco2
+                    conf["use_stackup_colors"] = cfg.use_stackup_colors
+                    conf["current_layer_preset"] = ""
+                elif cfg.ki6:
+                    render["show_eco"] = cfg.show_eco
+                    render["realistic"] = not cfg.use_layer_colors
+                json_text = json.dumps(conf, sort_keys=True)
                 with open(cfg.conf_3dview, "wt") as viewer_file:
                     viewer_file.write(json_text)
                 logger.debug("3D Viewer:")
@@ -1341,6 +1367,9 @@ def create_pcbnew_config(cfg):
             # Insert????!!!! please a cup of coffee for this guy ...
             text_file.write('ShowFootprints_Insert=%d\n' % (not cfg.no_smd))
             text_file.write('ShowFootprints_Virtual=%d\n' % (not cfg.no_virtual))
+            text_file.write('ShowRealisticMode=%d\n' % (not cfg.use_layer_colors))
+            text_file.write('ShowEcoLayers=%d\n' % (cfg.show_eco))
+            text_file.write('ShowCommentsLayers=%d\n' % (cfg.show_comments))
             # We enable the raytracer after applying all moves
             # text_file.write('RenderEngine=%d\n' % (cfg.ray_tracing))
             write_color(text_file, 'Bg', cfg.bg_color_1)
@@ -1492,8 +1521,10 @@ if __name__ == '__main__':  # noqa: C901
     drc_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file', default=['drc_result.rpt'])
     drc_parser.add_argument('--save', '-s', help='Save after DRC (updating filled zones)', action='store_true')
     drc_parser.add_argument('--schematic-parity', '-p', help='Check PCB vs SCH parity (KiCad 8+)', action='store_true')
-    drc_parser.add_argument('--all-track-errors', '-t', help='Report all errors for each track (KiCad 8+)', action='store_true')
-    drc_parser.add_argument('--units', '-u', help='Report units (KiCad 8+)', default='mm', choices=['in', 'mm', 'mils'], type=str)
+    drc_parser.add_argument('--all-track-errors', '-t', help='Report all errors for each track (KiCad 8+)',
+                            action='store_true')
+    drc_parser.add_argument('--units', '-u', help='Report units (KiCad 8+)', default='mm', choices=['in', 'mm', 'mils'],
+                            type=str)
     drc_parser.add_argument('kicad_pcb_file', help='KiCad PCB file')
     drc_parser.add_argument('output_dir', help='Output directory')
 
@@ -1531,15 +1562,22 @@ if __name__ == '__main__':  # noqa: C901
     v3d_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file (PNG)', default=['capture.png'])
     v3d_parser.add_argument('--ray_tracing', '-r', help='Enable the realistic render', action='store_true')
     v3d_parser.add_argument('--show_adhesive', help='Show the adhesive layer', action='store_true')
-    v3d_parser.add_argument('--show_comments', help='Show the user comments layer', action='store_true')
-    v3d_parser.add_argument('--show_eco', help='Show the user eco layers', action='store_true')
+    v3d_parser.add_argument('--show_comments', help='Show the user comments layer (KiCad 7: also drawings)',
+                            action='store_true')
+    v3d_parser.add_argument('--show_drawings', help='Show the user comments layer (KiCad 8)', action='store_true')
+    v3d_parser.add_argument('--show_eco', help='Show both user eco layers (KiCad 7)', action='store_true')
+    v3d_parser.add_argument('--show_eco1', help='Show the user eco layer 1 (KiCad 8)', action='store_true')
+    v3d_parser.add_argument('--show_eco2', help='Show the user eco layer 2 (KiCad 8)', action='store_true')
     v3d_parser.add_argument('--silk_color', nargs=1,
                             help='Silk color (KiCad 6 supports color1,color2 for top/bottom)', default=['#E5E5E5'])
     v3d_parser.add_argument('--sm_color', nargs=1, help='Solder mask color (KiCad 6 supports color1,color2 for top/bottom)',
                             default=['#143324D4'])
     v3d_parser.add_argument('--sp_color', nargs=1, help='Solder paste color', default=['#808080'])
-    v3d_parser.add_argument('--use_layer_colors', help='Use the colors of the layers, not realistic colors (KiCad 6)',
-                            action='store_true')
+    group = v3d_parser.add_mutually_exclusive_group()
+    group.add_argument('--use_layer_colors', help='Use the colors of the layers, not realistic colors (KiCad 6+)',
+                       action='store_true')
+    group.add_argument('--use_stackup_colors', help='Use the colors defined in the stackup (KiCad 6+)',
+                       action='store_true')
     v3d_parser.add_argument('--use_rt_wait', '-u', help='Use the ray tracing end detection even on normal renders',
                             action='store_true')
     v3d_parser.add_argument('--view', '-v', nargs=1, help='Axis view, uppercase is reversed (i.e. Z is bottom)',
@@ -1709,9 +1747,13 @@ if __name__ == '__main__':  # noqa: C901
         cfg.dont_substrack_mask_from_silk = args.dont_substrack_mask_from_silk
         cfg.dont_clip_silk_on_via_annulus = args.dont_clip_silk_on_via_annulus
         cfg.use_layer_colors = args.use_layer_colors
+        cfg.use_stackup_colors = args.use_stackup_colors
         cfg.hide_board_body = args.hide_board_body
         cfg.show_comments = args.show_comments
+        cfg.show_drawings = args.show_drawings
         cfg.show_eco = args.show_eco
+        cfg.show_eco1 = args.show_eco1
+        cfg.show_eco2 = args.show_eco2
         cfg.show_adhesive = args.show_adhesive
     else:
         cfg.no_tht = False
