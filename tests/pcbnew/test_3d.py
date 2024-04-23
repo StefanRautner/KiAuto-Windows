@@ -47,3 +47,33 @@ def test_3d_view_2(test_dir):
     ctx.run(cmd)
     ctx.compare_image('good_3d_rt_2.png', fuzz='50%', tol=2000)
     ctx.clean_up()
+
+
+def test_3d_view_draw_layer_colors(test_dir):
+    """ Test using the layer colors """
+    ctx = context.TestContext(test_dir, '3d_view_draw_layer_colors', 'drawings')
+    cmd = [PROG, '-vvv', '3d_view', '--output_name', 'drawings_layer.png', '--use_layer_colors', '--show_comment',
+           '--show_drawings', '--show_eco']
+    ctx.run(cmd)
+    ctx.compare_image('drawings_layer.png', fuzz='50%', tol=2000)
+    ctx.clean_up()
+
+
+def test_3d_view_draw_real_colors(test_dir):
+    """ Test using the provided colors """
+    ctx = context.TestContext(test_dir, '3d_view_draw_real_colors', 'drawings')
+    cmd = [PROG, '-vvv', '3d_view', '--output_name', 'drawings_real.png', '--show_comment', '--sm_color', '#285e3a',
+           '--show_drawings', '--show_eco']
+    ctx.run(cmd)
+    ctx.compare_image('drawings_real.png', fuzz='50%', tol=2000)
+    ctx.clean_up()
+
+
+def test_3d_view_draw_stackup_colors(test_dir):
+    """ Test using the stackup colors """
+    ctx = context.TestContext(test_dir, '3d_view_draw_stackup_colors', 'drawings')
+    cmd = [PROG, '-vvv', '3d_view', '--output_name', 'drawings_stackup.png', '--show_comment', '--use_stackup_colors',
+           '--show_drawings', '--show_eco']
+    ctx.run(cmd)
+    ctx.compare_image('drawings_stackup.png', fuzz='50%', tol=2000)
+    ctx.clean_up()
