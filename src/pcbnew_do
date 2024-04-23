@@ -1763,6 +1763,9 @@ if __name__ == '__main__':  # noqa: C901
         cfg.bg_color_1 = cfg.bg_color_2 = cfg.board_color = None
         cfg.copper_color = cfg.silk_color = cfg.sm_color = cfg.sp_color = None
         cfg.wait_after_move = False
+        cfg.show_adhesive = cfg.show_eco2 = cfg.show_eco1 = cfg.show_eco = cfg.show_drawings = cfg.show_comments = False
+        cfg.use_layer_colors = False
+        cfg.use_stackup_colors = True
 
     if args.command == 'export_vrml':
         cfg.copy_3d_models = args.dir_models is not None
