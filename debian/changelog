@@ -1,8 +1,18 @@
-kiauto (2.3.1-1) UNRELEASED; urgency=medium
+kiauto (2.3.1-1) stable; urgency=medium
 
-  * Next release
+  * 3D render options to control:
+    - KiCad 8:
+      - User drawings
+      - User Eco 1
+      - User Eco 2
+      - Not realistic
+    - KiCad 5:
+      - User comments/drawings
+      - User eco 1/2
+      - Realistic mode
+  * Better error message when kicad_common.json is corrupted (INTI-CMNB/KiBot#599)
 
- -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Tue, 02 Apr 2024 11:16:39 -0300
+ -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Tue, 23 Apr 2024 07:58:47 -0300
 
 kiauto (2.3.0-1) stable; urgency=medium
 
