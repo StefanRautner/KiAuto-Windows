@@ -65,7 +65,7 @@ jobs:
         # COVERALLS_COMPARE_SHA: ${{ inputs.compare-sha }}
         COVERALLS_SOURCE_HEADER: github-action
       run: |
-        ls -la coverage* .coverage*
+        ls -la .coverage*
         mkdir -p ~/bin/
         echo ~/bin >> $GITHUB_PATH
         ln -s `which python3-coverage` /usr/bin/coverage
