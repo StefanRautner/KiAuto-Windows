@@ -265,6 +265,9 @@ def open_dialog_i(cfg, name, keys, no_show=False, no_wait=False, no_main=False, 
     # Wait for KiCad to be sleeping
     wait_kicad_ready_i(cfg)
     cfg.logger.info('Opening dialog `{}` {}'.format(name, '('+extra_msg+')' if extra_msg is not None else ''))
+    # cfg.logger.error('Durmiendo')
+    # time.sleep(4)
+    # cfg.logger.error('Despertando')
     if isinstance(keys, str):
         keys = ['key', keys]
     xdotool(keys)
@@ -566,7 +569,9 @@ def dismiss_pcbnew_warning(cfg, title):
     for msg in msgs:
         # Warning about pad using an invalid layer
         # Missing font
-        if msg.endswith("could not find valid layer for pad") or re.search(r"Font '(.*)' not found; substituting '(.*)'", msg):
+        if msg.endswith("could not find valid layer for pad") or \
+           re.search(r"Font '(.*)' not found; substituting '(.*)'", msg) or \
+           msg.startswith("Altium layer"):
             cfg.logger.warning(msg)
             dismiss_dialog(cfg, title, 'Return')
             return

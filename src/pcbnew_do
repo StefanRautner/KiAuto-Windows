@@ -750,6 +750,33 @@ def export_vrml(cfg):
         export_vrml_n(cfg, keys)
 
 
+def convert_pcb_i(cfg):
+    keys = ['key', 'alt+f', 'Down', 'Down', 'Down', 'Down', 'Return']
+    dialog, _ = open_dialog_i(cfg, 'Save Board File As', keys)
+    send_keys(cfg, 'Select all', 'ctrl+a')
+    paste_output_file_i(cfg)
+    send_keys(cfg, 'Converting the file', 'Return', closes=dialog, delay_io=True)
+    wait_create_i(cfg, 'Converted PCB')
+    exit_kicad_i(cfg)
+
+
+def convert_pcb_n(cfg):
+    keys = ['key', 'alt+f', 'Down', 'Down', 'Down', 'Down', 'Return']
+    open_dialog_with_retry("Saving the PCB", keys, "Save As", 'Save Board File As', cfg)
+    xdotool(['key', 'ctrl+a'])
+    xdotool(['type', cfg.output_file])
+    xdotool(['key', 'Return'])
+    wait_for_file_created_by_process(cfg.pcbnew_pid, cfg.output_file)
+    exit_pcbnew(cfg)
+
+
+def convert_pcb(cfg):
+    if cfg.use_interposer:
+        convert_pcb_i(cfg)
+    else:
+        convert_pcb_n(cfg)
+
+
 def export_gencad_select_options(cfg):
     logger.info('Changing settings')
     xdotool(['key', 'Down'])
@@ -1627,6 +1654,12 @@ if __name__ == '__main__':  # noqa: C901
     export_vrml_parser.add_argument('--units', '-U', help='VRML units', default='millimeters', const='millimeters',
                                     nargs='?', choices=VRML_UNITS)
 
+    # short commands:
+    convert_parser = subparsers.add_parser('convert', help='Convert a PCB (i.e. from Altium)')
+    convert_parser.add_argument('pcb_file', help='Foreign PCB file')
+    convert_parser.add_argument('output_dir', help='Output directory')
+    convert_parser.add_argument('--output_name', '-o', nargs=1, help='Name of the output file', default=['converted.kicad_pcb'])
+
     args = parser.parse_args()
     logger = log.init(args.separate_info)
     # Set the specified verbosity
@@ -1637,7 +1670,8 @@ if __name__ == '__main__':  # noqa: C901
         parser.print_help()
         exit(WRONG_ARGUMENTS)
 
-    cfg = Config(logger, args.kicad_pcb_file, args, is_pcbnew=True)
+    input_file = args.pcb_file if args.command == 'convert' else args.kicad_pcb_file
+    cfg = Config(logger, input_file, args, is_pcbnew=True)
     cfg.wait_start = args.wait_start
     cfg.verbose = args.verbose
     set_time_out_scale(cfg.time_out_scale)
@@ -1646,7 +1680,7 @@ if __name__ == '__main__':  # noqa: C901
     cfg.fill_zones = False
     cfg.layers = []
     cfg.save = args.command == 'run_drc' and args.save
-    cfg.input_file = args.kicad_pcb_file
+    cfg.input_file = input_file
 
     # Get local versions for the GTK window names
     gettext.textdomain('gtk30')
@@ -1874,6 +1908,8 @@ if __name__ == '__main__':  # noqa: C901
                             ipc_netlist(cfg)
                         elif args.command == 'export_vrml':
                             export_vrml(cfg)
+                        elif args.command == 'convert':
+                            convert_pcb(cfg)
                         else:  # run_drc
                             run_drc(cfg)
                             error_level = process_drc_out(cfg)
