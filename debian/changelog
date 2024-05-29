@@ -1,3 +1,9 @@
+kiauto (2.3.2-1) UNRELEASED; urgency=medium
+
+  * Next release
+
+ -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Wed, 29 May 2024 12:14:59 -0300
+
 kiauto (2.3.1-1) stable; urgency=medium
 
   * 3D render options to control:
