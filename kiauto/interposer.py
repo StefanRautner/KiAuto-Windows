@@ -777,5 +777,8 @@ def wait_start_by_msg(cfg):
         elif title.startswith(KIKIT_HIDE):
             # Buggy KiKit plugin creating a dialog at start-up (many times)
             pass
+        elif title == 'Report':
+            # KiCad 8.0.3 bogus hidden dialog
+            pass
         else:
             unknown_dialog(cfg, title)
