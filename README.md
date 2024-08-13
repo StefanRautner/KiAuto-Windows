@@ -305,6 +305,5 @@ Scott explained the idea in his [blog](https://scottbezek.blogspot.be/2016/04/sc
 So this is the history of the scripts, at least what I know. In short: Scott Bezek had the original idea and used it for his project, but not as a separated tool.
 Seppe Stas from Productize SPRL took the scripts and created a tool from them.
 Then Jesse Vincent used the scripts to create a bigger set of tools and presented it on KiCon 2019.
-And finally I (Salvador E. Tropea) took Jesse's scripts and adapted them to the needs of [KiBot](https://github.com/INTI-CMNB/KiBot).
-
-
+Then Salvador E. Tropea took Jesse's scripts and adapted them to the needs of [KiBot](https://github.com/INTI-CMNB/KiBot).
+And Finally I (Stefan Rautner) took the scripts and made a Version that is compatible with Windows.
