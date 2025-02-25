@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020-2024 Salvador E. Tropea
-# Copyright (c) 2020-2024 Instituto Nacional de Tecnología Industrial
+# Copyright (c) 2020-2025 Salvador E. Tropea
+# Copyright (c) 2020-2025 Instituto Nacional de Tecnología Industrial
 # Copyright (c) 2019 Jesse Vincent (@obra)
 # Copyright (c) 2018-2019 Seppe Stas (@seppestas) (Productize SPRL)
 # Based on ideas by: Scott Bezek (@scottbez1)
@@ -63,6 +63,7 @@ TITLE_FILE_OPEN_ERROR = '^File Open (Error|Warning)$'
 DEBUG_KICAD_NG = False
 DEBUG_KICAD = False
 VRML_UNITS = ['millimeters', 'meters', 'deciinches', 'inches']
+VRML_UNITS_2_KCLI = ['mm', 'm', 'tenths', 'in']
 
 
 def parse_drc_ki5(lines):
@@ -706,6 +707,24 @@ def export_gencad(cfg):
         export_gencad_n(cfg, keys)
 
 
+def export_gencad_cli(cfg):
+    logger.debug("Using kicad-cli instead of running KiCad")
+    # Run the export from CLI
+    cmd = [cfg.kicad_cli, 'pcb', 'export', 'gencad', '-o', cfg.output_file]
+    if cfg.flip_bottom_padstacks:
+        cmd.append('--flip-bottom-pads')
+    if cfg.unique_pin_names:
+        cmd.append('--unique-pins')
+    if cfg.no_reuse_shapes:
+        cmd.append('--unique-footprints')
+    if cfg.aux_origin:
+        cmd.append('--use-drill-origin')
+    if cfg.save_origin:
+        cmd.append('--store-origin-coord')
+    cmd.append(cfg.input_file)
+    run_command(cmd)
+
+
 def export_vrml_i(cfg, keys):
     # Open the "VRML Export Options"
     dialog, _ = open_dialog_i(cfg, 'VRML Export Options', keys)
@@ -748,6 +767,21 @@ def export_vrml(cfg):
         export_vrml_i(cfg, keys)
     else:
         export_vrml_n(cfg, keys)
+
+
+def export_vrml_cli(cfg):
+    logger.debug("Using kicad-cli instead of running KiCad")
+    # Run the export from CLI
+    cmd = [cfg.kicad_cli, 'pcb', 'export', 'vrml', '-o', cfg.output_file, '-f', '--units', VRML_UNITS_2_KCLI[cfg.units]]
+    if cfg.copy_3d_models:
+        # Don't embed the 3D models
+        cmd.extend(['--models-relative', '--models-dir', cfg.dir_models if cfg.dir_models else 'shapes3D'])
+    if cfg.origin_mode == 0:
+        # User origin
+        units = VRML_UNITS_2_KCLI[VRML_UNITS.index(cfg.ref_units_ori)]
+        cmd.extend(['--user-origin', f'{cfg.ref_x}x{cfg.ref_y}{units}'])
+    cmd.append(cfg.input_file)
+    run_command(cmd)
 
 
 def convert_pcb_i(cfg):
@@ -1253,7 +1287,7 @@ def create_pcbnew_config(cfg):
             if layer_n < 1 or layer_n >= layer_cnt - 1:
                 logger.error(layer+" isn't a valid layer")
                 sys.exit(WRONG_LAYER_NAME)
-            used_layers.add(layer_n)
+            used_layers.add((layer_n+1)*2 if cfg.ki9 else layer_n)
         else:
             id = cfg.board.GetLayerID(layer)
             if id < 0:
@@ -1690,8 +1724,9 @@ if __name__ == '__main__':  # noqa: C901
     logger.debug('Print -> '+cfg.print_dlg_name)
 
     # Force english + UTF-8
-    en_locale = get_en_locale(logger)
-    os.environ['LC_ALL'] = en_locale
+    # Note: KiCad 6 needs a valid locale, C uses english
+    #       KiCad 7 doesn't need a valid locale 'en' is fine, C uses what LANG says
+    os.environ['LC_ALL'] = 'en' if cfg.ki7 else get_en_locale(logger)
     # Force english for GTK dialogs
     os.environ['LANGUAGE'] = 'en'
     # Force Mesa software rendering (otherwise, the 3D viewer may crash)
@@ -1805,6 +1840,7 @@ if __name__ == '__main__':  # noqa: C901
         cfg.copy_3d_models = args.dir_models is not None
         cfg.origin_mode = 1 if args.ref_x is None and args.ref_y is None else 0
         cfg.ref_units = 1 if args.ref_units == 'inches' else 0
+        cfg.ref_units_ori = args.ref_units
         cfg.ref_x = 0.0 if args.ref_x is None else args.ref_x
         cfg.ref_y = 0.0 if args.ref_y is None else args.ref_y
         cfg.units = VRML_UNITS.index(args.units)
@@ -1839,7 +1875,14 @@ if __name__ == '__main__':  # noqa: C901
     # Do all the work
     #
     error_level = 0
-    if args.command == 'run_drc' and not cfg.ki5 and (not args.force_gui or cfg.ki8):
+    do_retry = False
+    if args.command == 'export_vrml' and cfg.ki9:
+        export_vrml_cli(cfg)
+        cfg.use_interposer = cfg.enable_interposer = False
+    elif args.command == 'export_gencad' and cfg.ki9:
+        export_gencad_cli(cfg)
+        cfg.use_interposer = cfg.enable_interposer = False
+    elif args.command == 'run_drc' and not cfg.ki5 and (not args.force_gui or cfg.ki8):
         if cfg.ki8:
             # CLI implementation
             run_drc_cli(cfg, args.schematic_parity, args.all_track_errors, args.units)
@@ -1847,7 +1890,6 @@ if __name__ == '__main__':  # noqa: C901
             # First command to migrate to Python!
             run_drc_python(cfg)
         error_level = process_drc_out(cfg)
-        do_retry = False
         cfg.use_interposer = cfg.enable_interposer = False
     else:
         setup_config_files(cfg)
